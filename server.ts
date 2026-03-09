@@ -641,7 +641,11 @@ app.all("/api/*", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+  if (req.path.startsWith("/assets/") || req.path.includes(".")) {
+    res.status(404).send("Not found");
+  } else {
+    res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+  }
 });
 
 async function startServer() {
