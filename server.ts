@@ -640,6 +640,10 @@ app.all("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.url}` });
 });
 
+app.get("*", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
