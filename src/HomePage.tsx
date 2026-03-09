@@ -25,7 +25,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
             onClick={() => navigate(`/${div.toLowerCase()}`)}
-            className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl py-8 text-white font-display text-4xl uppercase tracking-tighter transition-all hover:scale-105 active:scale-95"
+            className="bg-ffse-navy hover:bg-ffse-navy/80 border border-ffse-navy rounded-2xl py-8 text-white font-display text-4xl uppercase tracking-tighter transition-all hover:scale-105 active:scale-95"
           >
             {div}
           </motion.button>
