@@ -6,13 +6,13 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-ffse-navy flex flex-col items-center justify-center px-6 gap-12">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 gap-12">
       <div className="flex flex-col items-center gap-3">
         <Trophy className="text-ffse-red" size={48} />
-        <h1 className="font-display text-4xl md:text-6xl tracking-tighter uppercase text-white leading-none">
+        <h1 className="font-display text-4xl md:text-6xl tracking-tighter uppercase text-ffse-navy leading-none">
           Rugby FFSE
         </h1>
-        <p className="text-blue-300/60 font-medium text-xs uppercase tracking-widest">
+        <p className="text-neutral-400 font-medium text-xs uppercase tracking-widest">
           Saison 2025 - 2026
         </p>
       </div>
