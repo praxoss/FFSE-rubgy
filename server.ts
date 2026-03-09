@@ -640,14 +640,6 @@ app.all("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.url}` });
 });
 
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/assets/") || req.path.includes(".")) {
-    res.status(404).send("Not found");
-  } else {
-    res.sendFile(path.join(process.cwd(), "dist", "index.html"));
-  }
-});
-
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -657,7 +649,11 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static("dist"));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+    });
   }
+  
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
