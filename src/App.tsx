@@ -41,8 +41,9 @@ type Division = "d1" | "d2" | "d3" | "d4";
 type Tab = "ranking" | "results";
 
 function DivisionPage() {
-  const { div, tab, day, club } = useParams<{ div: string; tab?: string; day?: string; club?: string }>();
-  const navigate = useNavigate();
+  const { div, day, club } = useParams<{ div: string; day?: string; club?: string }>();
+  const location = window.location.pathname;
+  const activeTab: Tab = location.includes("/results") ? "results" : "ranking";
   const division = (div || "d3") as Division;
 
   const [data, setData] = useState<Record<Division, DivisionData>>({
