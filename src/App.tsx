@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
 import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut } from "lucide-react";
 import { motion } from "motion/react";
@@ -42,9 +42,10 @@ type Tab = "ranking" | "results";
 
 function DivisionPage() {
   const { div, day, club } = useParams<{ div: string; day?: string; club?: string }>();
-  const location = window.location.pathname;
-  const activeTab: Tab = location.includes("/results") ? "results" : "ranking";
+  const location = useLocation();
+  const navigate = useNavigate();
   const division = (div || "d3") as Division;
+  const activeTab: Tab = location.pathname.includes("/results") ? "results" : "ranking";
 
   const [data, setData] = useState<Record<Division, DivisionData>>({
     d1: { rankings: [], matches: [] },
@@ -57,7 +58,6 @@ function DivisionPage() {
   const [debugResult, setDebugResult] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const activeTab: Tab = tab === "results" ? "results" : "ranking";
   const { rankings, matches } = data[division];
 
   const computeMatchday = (matches: Match[]) => {
