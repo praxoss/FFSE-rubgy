@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import HomePage from "./HomePage";
 import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut } from "lucide-react";
 import { motion } from "motion/react";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, isFirebaseConfigured } from "./firebase";
@@ -35,37 +37,64 @@ interface DivisionData {
   matches: Match[];
 }
 
-type View = "home" | "club";
-type Tab = "ranking" | "results";
 type Division = "d1" | "d2" | "d3" | "d4";
+type Tab = "ranking" | "results";
 
-export default function App() {
+function DivisionPage() {
+  const { div, tab, day, club } = useParams<{ div: string; tab?: string; day?: string; club?: string }>();
+  const navigate = useNavigate();
+  const division = (div || "d3") as Division;
+
   const [data, setData] = useState<Record<Division, DivisionData>>({
     d1: { rankings: [], matches: [] },
     d2: { rankings: [], matches: [] },
     d3: { rankings: [], matches: [] },
     d4: { rankings: [], matches: [] },
   });
-  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [debugResult, setDebugResult] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const [division, setDivision] = useState<Division>("d3");
-  const [view, setView] = useState<View>("home");
-  const [activeTab, setActiveTab] = useState<Tab>("ranking");
-  const [selectedClub, setSelectedClub] = useState<string | null>(null);
-  const [currentMatchday, setCurrentMatchday] = useState(1);
+  const activeTab: Tab = tab === "results" ? "results" : "ranking";
+  const { rankings, matches } = data[division];
 
-  const divData = data[division];
-  const { rankings, matches } = divData;
+  const computeMatchday = (matches: Match[]) => {
+    if (matches.length === 0) return 1;
+    const withResults = matches.filter(m => m.score_home !== null);
+    if (withResults.length > 0) return Math.max(...withResults.map(m => m.matchday));
+    return Math.min(...matches.map(m => m.matchday));
+  };
+
+  const defaultMatchday = useMemo(() => computeMatchday(matches), [matches]);
+  const currentMatchday = day ? parseInt(day) : defaultMatchday;
+  const maxMatchday = useMemo(() => matches.length > 0 ? Math.max(...matches.map(m => m.matchday)) : 1, [matches]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const res = await fetch(`${window.location.origin}/api/data`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setData({
+        d1: { rankings: json.d1?.rankings || [], matches: json.d1?.matches || [] },
+        d2: { rankings: json.d2?.rankings || [], matches: json.d2?.matches || [] },
+        d3: { rankings: json.d3?.rankings || [], matches: json.d3?.matches || [] },
+        d4: { rankings: json.d4?.rankings || [], matches: json.d4?.matches || [] },
+      });
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const handleLogin = async () => {
     if (!isFirebaseConfigured) { alert("Firebase n'est pas configuré."); return; }
@@ -77,42 +106,6 @@ export default function App() {
     if (!isFirebaseConfigured) return;
     try { await signOut(auth); } catch {}
   };
-
-  const computeMatchday = (matches: Match[]) => {
-    if (matches.length === 0) return 1;
-    const withResults = matches.filter(m => m.score_home !== null);
-    if (withResults.length > 0) return Math.max(...withResults.map(m => m.matchday));
-    return Math.min(...matches.map(m => m.matchday));
-  };
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`${window.location.origin}/api/data`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const newData: Record<Division, DivisionData> = {
-        d1: { rankings: json.d1?.rankings || [], matches: json.d1?.matches || [] },
-        d2: { rankings: json.d2?.rankings || [], matches: json.d2?.matches || [] },
-        d3: { rankings: json.d3?.rankings || [], matches: json.d3?.matches || [] },
-        d4: { rankings: json.d4?.rankings || [], matches: json.d4?.matches || [] },
-      };
-      setData(newData);
-      setLastUpdate(json.lastUpdate || null);
-      setCurrentMatchday(computeMatchday(newData[division].matches));
-    } catch (err) {
-      console.error("Failed to fetch data", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  useEffect(() => {
-    setCurrentMatchday(computeMatchday(divData.matches));
-    setView("home");
-    setSelectedClub(null);
-  }, [division]);
 
   const handleUpdate = async () => {
     if (!user) { alert("Veuillez vous connecter."); return; }
@@ -143,26 +136,15 @@ export default function App() {
     finally { setUpdating(false); }
   };
 
-  const selectedClubData = useMemo(() => selectedClub ? rankings.find(r => r.team.toLowerCase() === selectedClub.toLowerCase()) : undefined, [rankings, selectedClub]);
-
-  const clubMatches = useMemo(() => {
-    if (!selectedClub) return [];
-    return matches
-      .filter(m => {
-        const t = selectedClub.toLowerCase();
-        return m.home_team.toLowerCase() === t || m.away_team.toLowerCase() === t;
-      })
-      .sort((a, b) => a.matchday - b.matchday);
-  }, [matches, selectedClub]);
+  const navigateMatchday = (dir: "prev" | "next") => {
+    const next = dir === "prev" ? currentMatchday - 1 : currentMatchday + 1;
+    if (next < 1 || next > maxMatchday) return;
+    navigate(`/${division}/results/${next}`);
+  };
 
   const currentMatchdayMatches = useMemo(() =>
     matches.filter(m => m.matchday === currentMatchday),
     [matches, currentMatchday]
-  );
-
-  const maxMatchday = useMemo(() =>
-    matches.length > 0 ? Math.max(...matches.map(m => m.matchday)) : 1,
-    [matches]
   );
 
   const matchesByDate = useMemo(() => {
@@ -190,11 +172,6 @@ export default function App() {
     } catch { return dateStr; }
   };
 
-  const navigateMatchday = (dir: "prev" | "next") => {
-    if (dir === "prev" && currentMatchday > 1) setCurrentMatchday(currentMatchday - 1);
-    if (dir === "next" && currentMatchday < maxMatchday) setCurrentMatchday(currentMatchday + 1);
-  };
-
   const ClubLogo = ({ src, seed, size = "md" }: { src: string | null | undefined; seed: string; size?: "sm" | "md" }) => {
     const sizeClass = size === "sm" ? "w-7 h-7 md:w-9 md:h-9" : "w-8 h-8 md:w-10 md:h-10";
     return (
@@ -204,6 +181,59 @@ export default function App() {
       </div>
     );
   };
+
+  const Header = () => (
+    <header className="bg-ffse-navy text-white py-6 px-4 border-b-4 border-ffse-red sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/")} className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border border-neutral-200 shadow-md overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
+              <Trophy className="text-ffse-navy" size={30} />
+            </button>
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl tracking-tighter uppercase leading-none">
+                Rugby <span className="text-ffse-red">{division.toUpperCase()}</span> FFSE
+              </h1>
+              <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest mt-1">Saison 2025 - 2026</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {(["d1", "d2", "d3", "d4"] as Division[]).map((d, i) => (
+              <span key={d} className="flex items-center gap-2">
+                {i > 0 && <span className="text-blue-300/30">|</span>}
+                <button onClick={() => navigate(`/${d}`)}
+                  className={`font-display text-sm uppercase tracking-wider transition-colors ${division === d ? "text-white" : "text-blue-300/50 hover:text-blue-200"}`}>
+                  {d.toUpperCase()}
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex flex-col items-end gap-1">
+                {updating && <RefreshCw size={12} className="animate-spin text-blue-400" />}
+                <div className="flex gap-3">
+                  <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
+                  <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
+                  <button onClick={async () => {
+                    if (!confirm("Reset DB ?")) return;
+                    const idToken = await user!.getIdToken();
+                    await fetch(`${window.location.origin}/admin/reset-db`, { method: "POST", headers: { "Authorization": `Bearer ${idToken}` } });
+                    alert("DB réinitialisée — fais une MAJ");
+                  }} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">Reset</button>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="text-blue-300 hover:text-white transition-colors"><LogOut size={20} /></button>
+            </div>
+          ) : (
+            <button onClick={handleLogin} className="text-blue-300 hover:text-white transition-colors"><LogIn size={22} /></button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
 
   if (loading) {
     return (
@@ -216,7 +246,15 @@ export default function App() {
   }
 
   // ── Vue Club ──────────────────────────────────────────────
-  if (view === "club" && selectedClub) {
+  if (club) {
+    const selectedClub = decodeURIComponent(club);
+    const selectedClubData = rankings.find(r => r.team.toLowerCase() === selectedClub.toLowerCase());
+    const clubMatches = matches
+      .filter(m => {
+        const t = selectedClub.toLowerCase();
+        return m.home_team.toLowerCase() === t || m.away_team.toLowerCase() === t;
+      })
+      .sort((a, b) => a.matchday - b.matchday);
     const pastMatches = clubMatches.filter(m => m.score_home !== null);
     const futureMatches = clubMatches.filter(m => m.score_home === null);
 
@@ -225,7 +263,7 @@ export default function App() {
         <header className="bg-ffse-navy text-white py-5 px-4 border-b-4 border-ffse-red sticky top-0 z-50">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             <div className="shrink-0">
-              <button onClick={() => setView("home")} className="flex items-center gap-1 text-blue-300 hover:text-white font-bold uppercase tracking-wider transition-colors text-xs">
+              <button onClick={() => navigate(`/${division}`)} className="flex items-center gap-1 text-blue-300 hover:text-white font-bold uppercase tracking-wider transition-colors text-xs">
                 <ChevronLeft size={18} /> Retour
               </button>
             </div>
@@ -270,7 +308,6 @@ export default function App() {
               ))}
             </div>
           </section>
-
           <section>
             <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
               <Calendar className="text-ffse-red shrink-0" size={22} />
@@ -303,78 +340,26 @@ export default function App() {
     );
   }
 
-  // ── Vue Home ──────────────────────────────────────────────
+  // ── Vue Home Division ──────────────────────────────────────────────
   return (
     <div className="min-h-screen font-sans pb-20 bg-neutral-50">
-      <header className="bg-ffse-navy text-white py-6 px-4 border-b-4 border-ffse-red sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border border-neutral-200 shadow-md overflow-hidden shrink-0">
-                <Trophy className="text-ffse-navy" size={30} />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl md:text-3xl tracking-tighter uppercase leading-none">
-                  Rugby <span className="text-ffse-red">{division.toUpperCase()}</span> FFSE
-                </h1>
-                <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest mt-1">Saison 2025 - 2026</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {(["d1", "d2", "d3", "d4"] as Division[]).map((div, i) => (
-                <span key={div} className="flex items-center gap-2">
-                  {i > 0 && <span className="text-blue-300/30">|</span>}
-                  <button onClick={() => setDivision(div)}
-                    className={`font-display text-sm uppercase tracking-wider transition-colors ${
-                      division === div ? "text-white" : "text-blue-300/50 hover:text-blue-200"
-                    }`}>
-                    {div.toUpperCase()}
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden md:flex flex-col items-end gap-1">
-                  {updating && <RefreshCw size={12} className="animate-spin text-blue-400" />}
-                  <div className="flex gap-3">
-                    <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
-                    <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
-                    <button onClick={async () => {
-                      if (!confirm("Reset DB ?")) return;
-                      const idToken = await user!.getIdToken();
-                      await fetch(`${window.location.origin}/admin/reset-db`, { method: "POST", headers: { "Authorization": `Bearer ${idToken}` } });
-                      alert("DB réinitialisée — fais une MAJ");
-                    }} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">Reset</button>
-                  </div>
-                </div>
-                <button onClick={handleLogout} className="text-blue-300 hover:text-white transition-colors"><LogOut size={20} /></button>
-              </div>
-            ) : (
-              <button onClick={handleLogin} className="text-blue-300 hover:text-white transition-colors"><LogIn size={22} /></button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="max-w-5xl mx-auto mt-6 px-4">
         <div className="bg-white p-1 rounded-xl flex gap-1 border border-neutral-200 shadow-sm">
-          {(["ranking", "results"] as Tab[]).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
+          {(["ranking", "results"] as Tab[]).map(t => (
+            <button key={t} onClick={() => navigate(`/${division}${t === "results" ? "/results" : ""}`)}
               className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                activeTab === tab ? "bg-ffse-navy text-white shadow-md" : "text-neutral-400 hover:text-ffse-navy hover:bg-neutral-50"
+                activeTab === t ? "bg-ffse-navy text-white shadow-md" : "text-neutral-400 hover:text-ffse-navy hover:bg-neutral-50"
               }`}
             >
-              {tab === "ranking" ? "Classement" : "Résultats et calendrier"}
+              {t === "ranking" ? "Classement" : "Résultats et calendrier"}
             </button>
           ))}
         </div>
       </div>
 
       <main className="max-w-5xl mx-auto px-4 mt-6 space-y-12">
-
         {debugResult && (
           <div className="bg-neutral-900 text-neutral-400 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl">
             <div className="bg-neutral-800 px-6 py-3 flex items-center justify-between border-b border-neutral-700">
@@ -412,7 +397,7 @@ export default function App() {
                     {matchesByDate[date].map((match) => (
                       <div key={match.id} className="py-3 flex items-center gap-2 md:gap-4">
                         <div className="flex-1 text-right min-w-0">
-                          <button onClick={() => { setSelectedClub(match.home_team); setView("club"); }} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
+                          <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.home_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
                             {match.home_team}
                           </button>
                         </div>
@@ -434,7 +419,7 @@ export default function App() {
                           <ClubLogo src={match.away_logo} seed={match.away_team} size="sm" />
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <button onClick={() => { setSelectedClub(match.away_team); setView("club"); }} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
+                          <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.away_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
                             {match.away_team}
                           </button>
                         </div>
@@ -448,14 +433,12 @@ export default function App() {
               )}
             </div>
           </section>
-
         ) : (
           <section className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
               <Trophy className="text-ffse-red shrink-0" size={22} />
               <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Classement {division.toUpperCase()}</h2>
             </div>
-
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-neutral-200">
               <div className="overflow-x-auto">
                 <table className="w-full text-left table-fixed">
@@ -481,8 +464,8 @@ export default function App() {
                           const t = team.team.toLowerCase();
                           return (m.home_team.toLowerCase() === t || m.away_team.toLowerCase() === t) && m.score_home !== null;
                         })
-                        .sort((a, b) => a.date.localeCompare(b.date) || a.matchday - b.matchday)
-                        .slice(-5)
+                        .sort((a, b) => b.date.localeCompare(a.date) || b.matchday - a.matchday)
+                        .slice(0, 5)
                         .reverse()
                         .map(m => {
                           const isHome = m.home_team.toLowerCase() === team.team.toLowerCase();
@@ -498,9 +481,7 @@ export default function App() {
                           transition={{ delay: idx * 0.03 }}
                           className="hover:bg-neutral-50 transition-colors group"
                         >
-                          <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">
-                            {idx + 1}
-                          </td>
+                          <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
                           <td className="px-1 py-3">
                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden">
                               <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
@@ -508,7 +489,7 @@ export default function App() {
                             </div>
                           </td>
                           <td className="px-2 py-3 w-32 md:w-48">
-                            <button onClick={() => { setSelectedClub(team.team); setView("club"); }}
+                            <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(team.team)}`)}
                               className="font-bold text-base text-neutral-900 hover:text-ffse-blue transition-colors text-left leading-tight">
                               {team.team}
                             </button>
@@ -530,15 +511,11 @@ export default function App() {
                           <td className={`hidden md:table-cell px-2 py-3 text-center text-xs font-mono ${team.diff > 0 ? 'text-emerald-600' : team.diff < 0 ? 'text-red-600' : 'text-neutral-400'}`}>
                             {team.diff > 0 ? `+${team.diff}` : team.diff}
                           </td>
-                          <td className="px-2 py-3 text-center font-display text-xl md:text-2xl text-neutral-900 bg-neutral-50/50">
-                            {team.points}
-                          </td>
+                          <td className="px-2 py-3 text-center font-display text-xl md:text-2xl text-neutral-900 bg-neutral-50/50">{team.points}</td>
                         </motion.tr>
                       );
                     }) : (
-                      <tr>
-                        <td colSpan={10} className="px-6 py-20 text-center text-neutral-400 italic">Chargement du classement...</td>
-                      </tr>
+                      <tr><td colSpan={10} className="px-6 py-20 text-center text-neutral-400 italic">Chargement du classement...</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -558,5 +535,17 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/:div" element={<DivisionPage />} />
+      <Route path="/:div/results" element={<DivisionPage />} />
+      <Route path="/:div/results/:day" element={<DivisionPage />} />
+      <Route path="/:div/club/:club" element={<DivisionPage />} />
+    </Routes>
   );
 }
