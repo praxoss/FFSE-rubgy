@@ -3,3 +3,6 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "npx tsx server.ts"
+
+[build.nixpacks]
+nodeVersion = "20"
