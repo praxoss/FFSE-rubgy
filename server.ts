@@ -641,6 +641,22 @@ app.all("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.url}` });
 });
 
+// Lundi à 12h GMT+1
+cron.schedule("0 12 * * 1", async () => {
+  console.log("[cron] MAJ automatique du lundi...");
+  try {
+    await Promise.all([
+      refreshDivision("d1"),
+      refreshDivision("d2"),
+      refreshDivision("d3"),
+      refreshDivision("d4"),
+    ]);
+    console.log("[cron] MAJ terminée avec succès");
+  } catch (err) {
+    console.error("[cron] Erreur lors de la MAJ:", err);
+  }
+}, { timezone: "Europe/Paris" });
+
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
