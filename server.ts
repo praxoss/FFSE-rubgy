@@ -689,15 +689,6 @@ app.post("/admin/refresh", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post("/admin/reset-history", authenticateAdmin, (req, res) => {
-  try {
-    db.prepare("DELETE FROM rankings_history").run();
-    res.json({ success: true, message: "History cleared" });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.post("/admin/reset-db", authenticateAdmin, (req, res) => {
   try {
     db.prepare("DELETE FROM matches").run();
