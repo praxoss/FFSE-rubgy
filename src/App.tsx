@@ -431,9 +431,9 @@ function DivisionPage() {
                           <div className="bg-neutral-700 text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg">
                             {match.score_home !== null && match.score_away !== null ? (
                               <button onClick={() => match.ffse_event_id && navigate(`/${division}/match/${match.ffse_event_id}`)}
-                                className={match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}>
+                                className={`flex items-center gap-2 ${match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}`}>
                                 <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
-                                <span className="text-neutral-500 text-xs">-</span>
+                                <span className="text-neutral-500 text-xs">–</span>
                                 <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
                               </button>
                             ) : (
