@@ -210,7 +210,6 @@ function DivisionPage() {
   const Header = () => (
     <header className="bg-ffse-navy text-white px-4 pt-4 pb-3 border-b-4 border-ffse-red sticky top-0 z-50">
       <div className="max-w-5xl mx-auto flex flex-col gap-3">
-        {/* Ligne 1 : logo + titre + login */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/")} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-neutral-200 shadow-md overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
@@ -232,8 +231,6 @@ function DivisionPage() {
             )}
           </div>
         </div>
-
-        {/* Ligne 2 : divisions + boutons admin */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {(["d1", "d2", "d3", "d4"] as Division[]).map((d, i) => (
@@ -636,27 +633,26 @@ function MatchPage() {
     const a = Number(away) || 0;
     const centerLabel = label === "drops" ? "DR" : label.slice(0, 2).toUpperCase();
     return (
-      <div className="grid grid-cols-[1fr_60px_60px_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
-        {/* Col 1 : chiffre + label ferrés à droite */}
+      <div
+        className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3 last:border-0"
+        style={{ borderBottom: "0.3px solid #e5e5e5" }}
+      >
         <div className="flex items-center justify-end gap-1">
           <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
           <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
-        {/* Col 2 : SVG home centré */}
         <div className="flex justify-center">
           {icon
             ? <RugbyIcon type={icon} size={22} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        {/* Col 3 : SVG away centré */}
         <div className="flex justify-center">
           {icon
             ? <RugbyIcon type={icon} size={22} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        {/* Col 4 : label + chiffre ferrés à gauche */}
         <div className="flex items-center justify-start gap-1">
           <span className="text-xs font-normal text-neutral-400">{label}</span>
           <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
@@ -766,8 +762,8 @@ function MatchPage() {
               <h2 className="font-display text-xl uppercase tracking-tighter">Statistiques</h2>
             </div>
             <div className="px-6 py-4">
-              {/* Header */}
-              <div className="grid grid-cols-[1fr_60px_60px_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
+              {/* Header noms clubs */}
+              <div className="grid grid-cols-[1fr_80px_80px_1fr] pb-3 mb-2 border-b-4 border-ffse-navy">
                 <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
                 <div /><div />
                 <div className="text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
@@ -784,15 +780,18 @@ function MatchPage() {
                 const ar = Number(stats.away.red) || 0;
                 if (hy === 0 && hr === 0 && ay === 0 && ar === 0) return null;
                 return (
-                  <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3 border-b-2">
-                    <div className="flex justify-end">
-                      {(hy > 0 || hr > 0) ? <Cards y={hy} r={hr} /> : <span className="text-neutral-200 text-xs">–</span>}
+                  <div
+                    className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3"
+                    style={{ borderBottom: "0.3px solid #e5e5e5" }}
+                  >
+                    <div />
+                    <div className="flex justify-center">
+                      {(hy > 0 || hr > 0) && <Cards y={hy} r={hr} />}
+                    </div>
+                    <div className="flex justify-center">
+                      {(ay > 0 || ar > 0) && <Cards y={ay} r={ar} />}
                     </div>
                     <div />
-                    <div />
-                    <div className="flex justify-start">
-                      {(ay > 0 || ar > 0) ? <Cards y={ay} r={ar} /> : <span className="text-neutral-200 text-xs">–</span>}
-                    </div>
                   </div>
                 );
               })()}
