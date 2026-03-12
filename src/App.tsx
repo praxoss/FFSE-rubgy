@@ -608,7 +608,7 @@ function MatchPage() {
       transfo:  "https://www.lequipe.fr/img/icons/live/ico_transfo.svg",
       penalite: "https://www.lequipe.fr/img/icons/live/ico_penalite.svg",
     };
-    return <img src={icons[type]} alt={type} width={size} height={size} className="inline-block" />;
+    return <img src={icons[type]} alt={type} width={size} height={size} className="inline-block" style={{ width: size, height: "auto" }} />;
   };
 
   const Cards = ({ y, r }: { y: number; r: number }) => (
@@ -641,15 +641,15 @@ function MatchPage() {
           <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
           <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
-        <div className="flex justify-center">
+        <div className="flex justify-start pl-3">
           {icon
-            ? <RugbyIcon type={icon} size={22} />
+            ? <RugbyIcon type={icon} size={12} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        <div className="flex justify-center">
+        <div className="flex justify-end pr-3">
           {icon
-            ? <RugbyIcon type={icon} size={22} />
+            ? <RugbyIcon type={icon} size={12} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
