@@ -642,15 +642,15 @@ function MatchPage() {
           <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
           <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
-        {/* Col 2 : SVG home à 10px du label */}
-        <div className="pl-[10px]">
+        {/* Col 2 : SVG home centré */}
+        <div className="flex justify-center">
           {icon
             ? <RugbyIcon type={icon} size={22} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        {/* Col 3 : SVG away à 10px du label */}
-        <div className="pr-[10px]">
+        {/* Col 3 : SVG away centré */}
+        <div className="flex justify-center">
           {icon
             ? <RugbyIcon type={icon} size={22} />
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
