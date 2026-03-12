@@ -653,9 +653,9 @@ function MatchPage() {
             : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        <div className="flex items-center justify-start gap-1">
+        <div className="flex items-center justify-end gap-1">
           <span className="text-xs font-normal text-neutral-400">{label}</span>
-          <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
+          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
         </div>
       </div>
     );
