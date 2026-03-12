@@ -622,6 +622,7 @@ function MatchPage() {
     if ((!home || home === "0") && (!away || away === "0")) return null;
     const h = Number(home) || 0;
     const a = Number(away) || 0;
+    const centerLabel = label === "cartons jaunes" ? "CJ" : label === "cartons rouges" ? "CR" : label === "bonus offensif" ? "BO" : label === "bonus défensif" ? "BD" : label.slice(0, 2).toUpperCase();
     return (
       <div className="grid grid-cols-2 items-center py-3 border-b border-neutral-100 last:border-0">
         {/* Home : chiffre + label + SVG alignés à droite */}
