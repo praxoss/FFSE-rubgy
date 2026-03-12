@@ -784,7 +784,7 @@ function MatchPage() {
                 const ar = Number(stats.away.red) || 0;
                 if (hy === 0 && hr === 0 && ay === 0 && ar === 0) return null;
                 return (
-                  <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3">
+                  <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3 border-b border-neutral-100">
                     <div className="flex justify-end">
                       {(hy > 0 || hr > 0) ? <Cards y={hy} r={hr} /> : <span className="text-neutral-200 text-xs">–</span>}
                     </div>
