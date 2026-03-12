@@ -789,10 +789,10 @@ function MatchPage() {
                       {hy > 0 && <><span className="font-bold text-base text-neutral-400">{hy}</span></>}
                     </div>
                     <div className="flex justify-start pl-3">
-                      <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
+                      {hy > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />}
                     </div>
                     <div className="flex justify-end pr-3">
-                      <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
+                      {ay > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />}
                     </div>
                     <div className="flex items-center justify-start gap-1">
                       {ay > 0 && <><span className="font-bold text-base text-neutral-400">{ay}</span></>}
@@ -811,10 +811,10 @@ function MatchPage() {
                       {hr > 0 && <><span className="text-xs font-normal text-neutral-400">cartons r.</span><span className="font-bold text-base text-neutral-400">{hr}</span></>}
                     </div>
                     <div className="flex justify-start pl-3">
-                      <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />
+                      {hr > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />}
                     </div>
                     <div className="flex justify-end pr-3">
-                      <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />
+                      {ar > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />}
                     </div>
                     <div className="flex items-center justify-start gap-1">
                       {ar > 0 && <><span className="font-bold text-base text-neutral-400">{ar}</span><span className="text-xs font-normal text-neutral-400">cartons r.</span></>}
