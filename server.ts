@@ -689,18 +689,6 @@ app.post("/admin/refresh", authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post("/admin/reset-db", authenticateAdmin, (req, res) => {
-  try {
-    db.prepare("DELETE FROM matches").run();
-    db.prepare("DELETE FROM rankings").run();
-    db.prepare("DELETE FROM rankings_history").run();
-    db.prepare("DELETE FROM metadata").run();
-    res.json({ success: true, message: "Database cleared" });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.get("/admin/debug-fetch", authenticateAdmin, async (req, res) => {
   const targetUrl = req.query.url as string;
   if (!targetUrl) return res.status(400).json({ error: "Missing url parameter" });
@@ -715,15 +703,6 @@ app.get("/admin/debug-fetch", authenticateAdmin, async (req, res) => {
     res.json({ status: response.status, finalUrl: targetUrl, body });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/api/debug-html", async (req, res) => {
-  try {
-    const response = await fetch(`${FFSE_BASE}/sportspress/v2/tables/11807`);
-    res.json({ status: response.status, data: await response.json() });
-  } catch (error: any) {
-    res.status(500).send(error.message);
   }
 });
 
