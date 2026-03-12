@@ -484,7 +484,13 @@ function DivisionPage() {
                           className="hover:bg-neutral-50 transition-colors group"
                         >
                           <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
-                          <td className="px-1 py-3">
+                            <td className="hidden md:table-cell px-1 py-3">
+                              {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
+                              {team.trend === "down" && <span className="text-red-500 text-xs font-bold">▼</span>}
+                              {team.trend === "equal" && <span className="text-neutral-300 text-xs font-bold">=</span>}
+                              {team.trend === null && <span className="text-neutral-200 text-xs">–</span>}
+                            </td>
+                            <td className="px-1 py-3">
                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden">
                               <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
                                 alt="" className="w-full h-full object-contain p-1.5" referrerPolicy="no-referrer" />
