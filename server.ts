@@ -58,7 +58,7 @@ try {
   `);
 
     db.exec(`
-      CREATE TABLE matches (
+      CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         matchday INTEGER,
         division TEXT NOT NULL DEFAULT 'd3',
@@ -83,7 +83,7 @@ try {
 
 
     db.exec(`
-      CREATE TABLE rankings (
+      CREATE TABLE IF NOT EXISTS rankings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         team TEXT,
         division TEXT NOT NULL DEFAULT 'd3',
