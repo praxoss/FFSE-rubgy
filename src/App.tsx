@@ -705,7 +705,7 @@ function MatchPage() {
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
                   <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`}
-                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                    alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
               </div>
@@ -749,7 +749,7 @@ function MatchPage() {
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
                   <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`}
-                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                    alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.away_team}</span>
               </div>
