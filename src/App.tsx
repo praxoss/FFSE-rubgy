@@ -213,7 +213,7 @@ function DivisionPage() {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex flex-col items-end gap-1">
+              <div className="flex flex-col items-end gap-1">
                 {updating && <RefreshCw size={12} className="animate-spin text-blue-400" />}
                 <div className="flex gap-3">
                   <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
