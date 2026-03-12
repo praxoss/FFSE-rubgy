@@ -767,4 +767,21 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().then(async () => {
+  const backupLoaded = db.prepare("SELECT value FROM metadata WHERE key = 'backup_loaded'").get() as any;
+  if (backupLoaded) {
+    console.log("[startup] backup restauré détecté, MAJ automatique...");
+    db.prepare("DELETE FROM metadata WHERE key = 'backup_loaded'").run();
+    try {
+      await Promise.all([
+        refreshDivision("d1"),
+        refreshDivision("d2"),
+        refreshDivision("d3"),
+        refreshDivision("d4"),
+      ]);
+      console.log("[startup] MAJ automatique terminée");
+    } catch (err) {
+      console.error("[startup] MAJ automatique échouée:", err);
+    }
+  }
+});
