@@ -264,6 +264,11 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         ? venueClass.replace("sp_venue-", "").split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
         : "Terrain FFSE";
 
+      const bonus_off_home = e.results?.[String(homeId)]?.bp ? 1 : 0;
+      const bonus_def_home = e.results?.[String(homeId)]?.bd ? 1 : 0;
+      const bonus_off_away = e.results?.[String(awayId)]?.bp ? 1 : 0;
+      const bonus_def_away = e.results?.[String(awayId)]?.bd ? 1 : 0;
+
       return {
         ffse_event_id: e.id,
         matchday: parseInt(e.day, 10) || 999,
@@ -274,6 +279,10 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         away_team_id: awayId,
         score_home,
         score_away,
+        bonus_off_home,
+        bonus_def_home,
+        bonus_off_away,
+        bonus_def_away,
       };
     })
     .sort((a, b) => a.matchday !== b.matchday ? a.matchday - b.matchday : a.date.localeCompare(b.date));
@@ -360,20 +369,28 @@ async function refreshDivision(division: Division) {
       away_logo:  away?.logo ?? null,
       score_home: m.score_home,
       score_away: m.score_away,
+      bonus_off_home: m.bonus_off_home,
+      bonus_def_home: m.bonus_def_home,
+      bonus_off_away: m.bonus_off_away,
+      bonus_def_away: m.bonus_def_away,
     };
   });
 
   const upsertMatch = db.prepare(`
-    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, updated_at)
-    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, CURRENT_TIMESTAMP)
+    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, updated_at)
+    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, @bonus_off_home, @bonus_def_home, @bonus_off_away, @bonus_def_away, CURRENT_TIMESTAMP)
     ON CONFLICT(matchday, division, home_team, away_team) DO UPDATE SET
-      ffse_event_id = excluded.ffse_event_id,
-      score_home = COALESCE(excluded.score_home, matches.score_home),
-      score_away = COALESCE(excluded.score_away, matches.score_away),
-      date       = excluded.date,
-      time       = excluded.time,
-      location   = excluded.location,
-      updated_at = CURRENT_TIMESTAMP
+      ffse_event_id  = excluded.ffse_event_id,
+      score_home     = COALESCE(excluded.score_home, matches.score_home),
+      score_away     = COALESCE(excluded.score_away, matches.score_away),
+      bonus_off_home = excluded.bonus_off_home,
+      bonus_def_home = excluded.bonus_def_home,
+      bonus_off_away = excluded.bonus_off_away,
+      bonus_def_away = excluded.bonus_def_away,
+      date           = excluded.date,
+      time           = excluded.time,
+      location       = excluded.location,
+      updated_at     = CURRENT_TIMESTAMP
   `);
 
   const insertRanking = db.prepare(`
