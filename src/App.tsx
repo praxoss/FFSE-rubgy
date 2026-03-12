@@ -767,9 +767,10 @@ function MatchPage() {
             </div>
             <div className="px-6 py-4">
               {/* Header */}
-              <div className="grid grid-cols-2 pb-3 mb-2 border-b-2 border-ffse-navy">
-                <div className="text-right pr-[10px] text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
-                <div className="text-left pl-[10px] text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
+              <div className="grid grid-cols-[1fr_60px_60px_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
+                <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
+                <div /><div />
+                <div className="text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
               </div>
               <StatRow label="essais" icon="essai" home={stats.home.tries} away={stats.away.tries} />
               <StatRow label="transf." icon="transfo" home={stats.home.conversions} away={stats.away.conversions} />
