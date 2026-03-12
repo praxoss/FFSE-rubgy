@@ -453,7 +453,7 @@ function DivisionPage() {
                       <th className="hidden md:table-cell px-1 py-3 w-6"></th>
                       <th className="px-1 py-3 w-9 md:w-12"></th>
                       <th className="px-2 py-3 text-left w-32 md:w-48">Équipe</th>
-                      <th className="hidden md:table-cell px-2 py-3 w-24"></th>
+                      <th className="hidden sm:table-cell px-2 py-3 w-24"></th>
                       <th className="px-1 py-3 text-center w-6">J</th>
                       <th className="px-1 py-3 text-center w-6">G</th>
                       <th className="px-1 py-3 text-center w-6">N</th>
@@ -506,7 +506,7 @@ function DivisionPage() {
                               {team.team}
                             </button>
                           </td>
-                          <td className="hidden md:table-cell px-2 py-3 w-24">
+                          <td className="hidden sm:table-cell px-2 py-3 w-24">
                             <div className="flex gap-1.5 items-center">
                               {teamForm.map((res, i) => (
                                 <div key={`${team.id}-form-${i}`} title={res === 'W' ? 'Victoire' : res === 'L' ? 'Défaite' : 'Nul'}
