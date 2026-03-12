@@ -41,6 +41,7 @@ interface MatchStats {
   yellow: string | null;
   red: string | null;
   bonus_def: string | null;
+  bonus_off: string | null;
 }
 
 interface MatchDetail {
@@ -725,7 +726,8 @@ function MatchPage() {
               <StatRow label="drops" icon={null} home={stats.home.drops} away={stats.away.drops} />
               <StatRow label="cartons jaunes" icon={null} home={stats.home.yellow} away={stats.away.yellow} />
               <StatRow label="cartons rouges" icon={null} home={stats.home.red} away={stats.away.red} />
-              <StatRow label="bonus défensif" icon={null} home={stats.home.bonus_def ? "1" : null} away={stats.away.bonus_def ? "1" : null} />
+              <StatRow label="bonus offensif" icon={null} home={stats.home.bonus_off ? "✓" : null} away={stats.away.bonus_off ? "✓" : null} />
+              <StatRow label="bonus défensif" icon={null} home={stats.home.bonus_def ? "✓" : null} away={stats.away.bonus_def ? "✓" : null} />
             </div>
           </div>
         )}
