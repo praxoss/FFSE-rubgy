@@ -119,6 +119,17 @@ try {
     );
   `);
 
+  // Migration — ajout colonnes bonus
+try {
+  db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_home INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_home INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_away INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_away INTEGER DEFAULT 0`);
+  console.log("[migration] colonnes bonus ajoutées");
+} catch (e) {
+  // colonnes déjà présentes, normal
+}
+  
   console.log("Database initialized successfully");
 
 } catch (err) {
