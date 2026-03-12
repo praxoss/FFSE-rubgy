@@ -557,15 +557,6 @@ app.post("/admin/refresh", authenticateAdmin, async (req, res) => {
       return res.status(500).json({ error: "API returned no data" });
     }
 
-    writeBackupFile({
-      saved_at: new Date().toISOString(),
-      source: "wp-json REST API",
-      d1: { rankings: d1Result.allRankings, matches: d1Result.allMatches },
-      d2: { rankings: d2Result.allRankings, matches: d2Result.allMatches },
-      d3: { rankings: d3Result.allRankings, matches: d3Result.allMatches },
-      d4: { rankings: d4Result.allRankings, matches: d4Result.allMatches },
-    });
-
     res.json({
       success: true,
       count: {
