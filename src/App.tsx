@@ -624,19 +624,19 @@ function MatchPage() {
     const a = Number(away) || 0;
     return (
       <div className="flex items-center py-3 border-b border-neutral-100 last:border-0">
-        {/* Home stat */}
-        <div className="flex-1 flex items-center justify-end gap-2">
-          <span className="text-xs font-normal text-neutral-400">{label}</span>
-          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
+        {/* Home stat : label à gauche, chiffre collé à droite */}
+        <div className="flex-1 flex items-center justify-end">
+          <span className="text-xs font-normal text-neutral-400 mr-2">{label}</span>
+          <span className={`font-bold text-base w-6 text-right ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
         </div>
-        {/* Icon */}
-        <div className="w-16 flex justify-center shrink-0">
-          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{label.slice(0,2)}</span>}
+        {/* Icon : 10px de chaque côté */}
+        <div className="flex items-center justify-center px-[10px] shrink-0">
+          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-6 text-center">{label.slice(0,2)}</span>}
         </div>
-        {/* Away stat */}
-        <div className="flex-1 flex items-center justify-start gap-2">
-          <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
-          <span className="text-xs font-normal text-neutral-400">{label}</span>
+        {/* Away stat : chiffre collé à gauche, label à droite */}
+        <div className="flex-1 flex items-center justify-start">
+          <span className={`font-bold text-base w-6 text-left ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
+          <span className="text-xs font-normal text-neutral-400 ml-2">{label}</span>
         </div>
       </div>
     );
@@ -720,8 +720,6 @@ function MatchPage() {
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.away_team}</span>
               </div>
             </div>
-          </div>
-
           </div>
 
         {/* Date + Venue */}
