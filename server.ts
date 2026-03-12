@@ -57,38 +57,6 @@ try {
     );
   `);
 
-  // ── Matches migration ──
-  const matchesInfo = db.prepare("PRAGMA table_info(matches)").all() as any[];
-  const hasMatchesLogo = matchesInfo.some(col => col.name === 'home_logo');
-  const hasMatchesDivision = matchesInfo.some(col => col.name === 'division');
-
-  if (hasMatchesLogo) {
-    console.log("Migrating matches table (remove logo, add division)...");
-    db.transaction(() => {
-      db.exec(`
-        ALTER TABLE matches RENAME TO matches_old;
-        CREATE TABLE matches (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          matchday INTEGER,
-          division TEXT NOT NULL DEFAULT 'd3',
-          date TEXT,
-          time TEXT,
-          location TEXT,
-          home_team TEXT,
-          away_team TEXT,
-          score_home INTEGER,
-          score_away INTEGER,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-        INSERT INTO matches (id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, updated_at)
-        SELECT id, matchday, 'd3', date, time, location, home_team, away_team, score_home, score_away, updated_at FROM matches_old;
-        DROP TABLE matches_old;
-      `);
-    })();
-  } else if (!hasMatchesDivision && matchesInfo.length > 0) {
-    console.log("Adding division column to matches...");
-    db.exec(`ALTER TABLE matches ADD COLUMN division TEXT NOT NULL DEFAULT 'd3'`);
-  } else if (matchesInfo.length === 0) {
     db.exec(`
       CREATE TABLE matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,7 +72,6 @@ try {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
-  }
 
   try {
     db.exec(`DROP INDEX IF EXISTS idx_matches_unique`);
@@ -114,41 +81,7 @@ try {
     console.warn("Index creation warning:", e);
   }
 
-  // ── Rankings migration ──
-  const rankingsInfo = db.prepare("PRAGMA table_info(rankings)").all() as any[];
-  const tableExists = rankingsInfo.length > 0;
-  const hasRankingsLogo = rankingsInfo.some(col => col.name === 'logo');
-  const hasBonus = rankingsInfo.some(col => col.name === 'bonus');
-  const hasRankingsDivision = rankingsInfo.some(col => col.name === 'division');
 
-  if (tableExists && (hasRankingsLogo || !hasBonus)) {
-    console.log("Migrating rankings table...");
-    db.transaction(() => {
-      db.exec(`
-        ALTER TABLE rankings RENAME TO rankings_old;
-        CREATE TABLE rankings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          team TEXT,
-          division TEXT NOT NULL DEFAULT 'd3',
-          played INTEGER,
-          won INTEGER,
-          drawn INTEGER,
-          lost INTEGER,
-          bonus INTEGER DEFAULT 0,
-          diff INTEGER DEFAULT 0,
-          points INTEGER,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(team, division)
-        );
-        INSERT INTO rankings (id, team, division, played, won, drawn, lost, bonus, diff, points, updated_at)
-        SELECT id, team, 'd3', played, won, drawn, lost, 0, 0, points, updated_at FROM rankings_old;
-        DROP TABLE rankings_old;
-      `);
-    })();
-  } else if (tableExists && !hasRankingsDivision) {
-    console.log("Adding division column to rankings...");
-    db.exec(`ALTER TABLE rankings ADD COLUMN division TEXT NOT NULL DEFAULT 'd3'`);
-  } else if (!tableExists) {
     db.exec(`
       CREATE TABLE rankings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -165,7 +98,6 @@ try {
         UNIQUE(team, division)
       );
     `);
-  }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS metadata (
@@ -188,18 +120,6 @@ try {
 
   console.log("Database initialized successfully");
 
-  const c1 = db.prepare("SELECT COUNT(*) as c FROM rankings").get() as any;
-  const c2 = db.prepare("SELECT COUNT(*) as c FROM matches").get() as any;
-
-  if ((c1?.c || 0) === 0 && (c2?.c || 0) === 0) {
-    const backup = readBackupFile();
-    if (backup) {
-      console.log("[backup] DB empty -> restoring from backup.json");
-      seedDbFromBackup(backup);
-    } else {
-      console.warn("[backup] DB empty and no backup.json found");
-    }
-  }
 } catch (err) {
   console.error("Database initialization/migration failed:", err);
 }
