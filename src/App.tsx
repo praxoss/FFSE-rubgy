@@ -365,6 +365,7 @@ function DivisionPage() {
           <div className="bg-neutral-900 text-neutral-400 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl">
             <div className="bg-neutral-800 px-6 py-3 flex items-center justify-between border-b border-neutral-700">
               <h3 className="text-[10px] uppercase tracking-widest font-bold">Debug</h3>
+              <button onClick={() => navigator.clipboard.writeText(JSON.stringify(debugResult, null, 2))} className="text-neutral-500 hover:text-white text-xs font-bold uppercase">Copier</button>
               <button onClick={() => setDebugResult(null)} className="text-neutral-500 hover:text-white text-xs font-bold uppercase">Fermer</button>
             </div>
             <div className="p-6 overflow-auto max-h-[400px] font-mono text-[10px] leading-relaxed">
