@@ -316,9 +316,14 @@ function DivisionPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <ClubLogo src={m.home_logo} seed={m.home_team} size="sm" />
                     <div className="bg-neutral-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 font-display text-lg md:text-xl min-w-[76px] justify-center shadow-lg">
-                      <span className={m.score_home! > m.score_away! ? "text-white" : "text-neutral-400"}>{m.score_home}</span>
-                      <span className="text-neutral-500 text-sm">-</span>
-                      <span className={m.score_away! > m.score_home! ? "text-white" : "text-neutral-400"}>{m.score_away}</span>
+                      <button
+                        onClick={() => m.ffse_event_id && navigate(`/${division}/match/${m.ffse_event_id}`)}
+                        className={m.ffse_event_id ? "hover:opacity-70 transition-opacity flex items-center gap-1" : "flex items-center gap-1"}
+                      >
+                        <span className={m.score_home! > m.score_away! ? "text-white" : "text-neutral-400"}>{m.score_home}</span>
+                        <span className="text-neutral-500 text-sm">-</span>
+                        <span className={m.score_away! > m.score_home! ? "text-white" : "text-neutral-400"}>{m.score_away}</span>
+                      </button>
                     </div>
                     <ClubLogo src={m.away_logo} seed={m.away_team} size="sm" />
                   </div>
