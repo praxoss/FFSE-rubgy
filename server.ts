@@ -53,7 +53,6 @@ function seedDbFromBackup(backup: any) {
       divisions.push({ division: div, rankings: d.rankings || [], matches: d.matches || [] });
     }
   }
-  // fallback ancien format flat → d3
   if (divisions.length === 0 && Array.isArray(backup?.rankings)) {
     divisions.push({ division: "d3", rankings: backup.rankings || [], matches: backup.matches || [] });
   }
@@ -215,7 +214,6 @@ try {
     `);
   }
 
-  // Toujours recréer l'index avec division inclus
   try {
     db.exec(`DROP INDEX IF EXISTS idx_matches_unique`);
     db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_matches_unique ON matches(matchday, division, home_team, away_team)`);
@@ -281,6 +279,18 @@ try {
     CREATE TABLE IF NOT EXISTS metadata (
       key TEXT PRIMARY KEY,
       value TEXT
+    );
+  `);
+
+  // ── Rankings history ──
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rankings_history (
+      team TEXT,
+      division TEXT,
+      position INTEGER,
+      points INTEGER,
+      saved_at TEXT,
+      PRIMARY KEY (team, division, saved_at)
     );
   `);
 
@@ -459,13 +469,32 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
 
 app.get("/api/data", (req, res) => {
   try {
-    const getRankings = (division: string) => db.prepare(`
-      SELECT r.*, c.logo
-      FROM rankings r
-      LEFT JOIN clubs c ON r.team = c.name
-      WHERE r.division = ?
-      ORDER BY r.points DESC
-    `).all(division);
+    const getRankings = (division: string) => {
+      const rows = db.prepare(`
+        SELECT r.*, c.logo
+        FROM rankings r
+        LEFT JOIN clubs c ON r.team = c.name
+        WHERE r.division = ?
+        ORDER BY r.points DESC, r.diff DESC
+      `).all(division) as any[];
+
+      return rows.map((r, idx) => {
+        const prev = db.prepare(`
+          SELECT position FROM rankings_history
+          WHERE team = ? AND division = ?
+          ORDER BY saved_at DESC LIMIT 1
+        `).get(r.team, division) as any;
+
+        let trend: "up" | "down" | "equal" | null = null;
+        if (prev) {
+          const currentPos = idx + 1;
+          if (currentPos < prev.position) trend = "up";
+          else if (currentPos > prev.position) trend = "down";
+          else trend = "equal";
+        }
+        return { ...r, trend };
+      });
+    };
 
     const getMatches = (division: string) => db.prepare(`
       SELECT m.*, c_home.logo AS home_logo, c_away.logo AS away_logo
@@ -544,6 +573,22 @@ async function refreshDivision(division: Division) {
   `);
 
   db.transaction(() => {
+    // Sauvegarder positions actuelles avant MAJ
+    const currentRankings = db.prepare(
+      "SELECT team, points FROM rankings WHERE division = ? ORDER BY points DESC, diff DESC"
+    ).all(division) as any[];
+
+    if (currentRankings.length > 0) {
+      const savedAt = new Date().toISOString();
+      const saveHistory = db.prepare(`
+        INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      currentRankings.forEach((r, idx) => {
+        saveHistory.run(r.team, division, idx + 1, r.points, savedAt);
+      });
+    }
+
     for (const [id, team] of teamMap) {
       const canonicalName = rankingNameMap.get(id) ?? team.name;
       if (canonicalName && team.logo) upsertClub.run(canonicalName, team.logo);
@@ -604,6 +649,7 @@ app.post("/admin/reset-db", authenticateAdmin, (req, res) => {
   try {
     db.prepare("DELETE FROM matches").run();
     db.prepare("DELETE FROM rankings").run();
+    db.prepare("DELETE FROM rankings_history").run();
     db.prepare("DELETE FROM metadata").run();
     res.json({ success: true, message: "Database cleared" });
   } catch (error: any) {
@@ -670,7 +716,7 @@ async function startServer() {
       res.sendFile(path.join(process.cwd(), "dist", "index.html"));
     });
   }
-  
+
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
