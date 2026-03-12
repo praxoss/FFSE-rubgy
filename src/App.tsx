@@ -636,7 +636,7 @@ function MatchPage() {
     const a = Number(away) || 0;
     const centerLabel = label === "drops" ? "DR" : label.slice(0, 2).toUpperCase();
     return (
-      <div className="grid grid-cols-[1fr_60px_60px_1fr] items-center py-3 border-b border-neutral-100 last:border-0">
+      <div className="grid grid-cols-[1fr_60px_60px_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
         {/* Col 1 : chiffre + label ferrés à droite */}
         <div className="flex items-center justify-end gap-1">
           <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
@@ -784,13 +784,13 @@ function MatchPage() {
                 const ar = Number(stats.away.red) || 0;
                 if (hy === 0 && hr === 0 && ay === 0 && ar === 0) return null;
                 return (
-                  <div className="grid grid-cols-[1fr_60px_60px_1fr] items-center py-3 border-b border-neutral-100">
-                    <div className="flex justify-end pr-[10px]">
+                  <div className="grid grid-cols-[1fr_80px_80px_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
+                    <div className="flex justify-end">
                       {(hy > 0 || hr > 0) ? <Cards y={hy} r={hr} /> : <span className="text-neutral-200 text-xs">–</span>}
                     </div>
-                    <div className="text-neutral-300 text-xs font-bold uppercase tracking-wider px-1">CJ</div>
-                    <div className="text-neutral-300 text-xs font-bold uppercase tracking-wider px-1">CR</div>
-                    <div className="flex justify-start pl-[10px]">
+                    <div />
+                    <div />
+                    <div className="flex justify-start">
                       {(ay > 0 || ar > 0) ? <Cards y={ay} r={ar} /> : <span className="text-neutral-200 text-xs">–</span>}
                     </div>
                   </div>
