@@ -27,7 +27,13 @@ const BACKUP_PATH = path.join(process.cwd(), "backup.json");
 
 function writeBackupFile(payload: any) {
   try {
-    fs.writeFileSync(BACKUP_PATH, JSON.stringify(payload, null, 2), "utf-8");
+    const history: any = {};
+    for (const div of ["d1", "d2", "d3", "d4"]) {
+      history[div] = db.prepare(
+        "SELECT team, position, points, saved_at FROM rankings_history WHERE division = ? ORDER BY saved_at DESC"
+      ).all(div);
+    }
+    fs.writeFileSync(BACKUP_PATH, JSON.stringify({ ...payload, history }, null, 2), "utf-8");
     console.log(`[backup] wrote ${BACKUP_PATH}`);
   } catch (e: any) {
     console.error("[backup] failed to write backup:", e?.message || e);
@@ -128,6 +134,22 @@ function seedDbFromBackup(backup: any) {
   });
 
   tx();
+
+  // Restaurer l'historique
+  const saveHistory = db.prepare(`
+    INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const restoreHistory = db.transaction(() => {
+    for (const div of ["d1", "d2", "d3", "d4"]) {
+      const entries = backup?.history?.[div] || [];
+      for (const entry of entries) {
+        saveHistory.run(entry.team, div, entry.position, entry.points, entry.saved_at);
+      }
+    }
+  });
+  restoreHistory();
+  console.log("[backup] rankings_history restored");
 }
 
 // Auth Middleware
