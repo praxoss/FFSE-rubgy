@@ -20,6 +20,7 @@ interface Ranking {
 
 interface Match {
   id: number;
+  ffse_event_id?: number;
   matchday: number;
   date: string;
   time: string;
@@ -30,6 +31,23 @@ interface Match {
   away_logo: string | null;
   score_home: number | null;
   score_away: number | null;
+}
+
+interface MatchStats {
+  tries: string | null;
+  conversions: string | null;
+  penalties: string | null;
+  drops: string | null;
+  yellow: string | null;
+  red: string | null;
+  bonus_def: string | null;
+}
+
+interface MatchDetail {
+  match: Match & { ffse_event_id: number };
+  venue: { id: number; name: string; slug: string } | null;
+  stats: { home: MatchStats | null; away: MatchStats | null };
+  ffse_url: string;
 }
 
 interface DivisionData {
@@ -404,12 +422,13 @@ function DivisionPage() {
                           <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
                           <div className="bg-neutral-700 text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg">
                             {match.score_home !== null && match.score_away !== null ? (
-                              <>
-                                <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
-                                <span className="text-neutral-500 text-xs">-</span>
-                                <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
-                              </>
-                            ) : (
+                                <button onClick={() => match.ffse_event_id && navigate(`/${division}/match/${match.ffse_event_id}`)}
+                                  className={match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}>
+                                  <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
+                                  <span className="text-neutral-500 text-xs">-</span>
+                                  <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
+                                </button>
+                              ) : (
                               <span className="text-[9px] font-sans font-bold uppercase tracking-tight text-neutral-300 text-center leading-tight">
                                 {formatShortDateTime(match.date, match.time)}
                               </span>
@@ -544,10 +563,174 @@ function DivisionPage() {
   );
 }
 
+function MatchPage() {
+  const { div, eventId } = useParams<{ div: string; eventId: string }>();
+  const navigate = useNavigate();
+  const division = (div || "d3") as Division;
+  const [detail, setDetail] = useState<MatchDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${window.location.origin}/api/match/${eventId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) setError(data.error);
+        else setDetail(data);
+      })
+      .catch(() => setError("Erreur de chargement"))
+      .finally(() => setLoading(false));
+  }, [eventId]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-neutral-900 text-white">
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+        <RefreshCw size={48} className="text-blue-500" />
+      </motion.div>
+    </div>
+  );
+
+  if (error || !detail) return (
+    <div className="flex items-center justify-center min-h-screen bg-neutral-50">
+      <div className="text-neutral-400 italic">Match introuvable</div>
+    </div>
+  );
+
+  const { match, venue, stats, ffse_url } = detail;
+  const played = match.score_home !== null && match.score_away !== null;
+
+  const StatRow = ({ label, home, away }: { label: string; home: string | null; away: string | null }) => {
+    if (!home && !away) return null;
+    const h = Number(home) || 0;
+    const a = Number(away) || 0;
+    return (
+      <div className="flex items-center gap-4 py-2 border-b border-neutral-100 last:border-0">
+        <div className={`flex-1 text-right font-bold text-sm ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</div>
+        <div className="w-32 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">{label}</div>
+        <div className={`flex-1 text-left font-bold text-sm ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen font-sans pb-20 bg-neutral-50">
+      {/* Header */}
+      <header className="bg-ffse-navy text-white px-4 pt-4 pb-3 border-b-4 border-ffse-red sticky top-0 z-50">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <button onClick={() => navigate(`/${division}/results`)} className="flex items-center gap-1 text-blue-300 hover:text-white font-bold uppercase tracking-wider transition-colors text-xs">
+            <ChevronLeft size={18} /> Retour
+          </button>
+          <div className="text-[10px] uppercase tracking-widest text-blue-300/60 font-bold">
+            {division.toUpperCase()} · Journée {match.matchday}
+          </div>
+          <a href={ffse_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider transition-colors">
+            FFSE ↗
+          </a>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
+
+        {/* Score card */}
+        <div className="bg-white rounded-3xl shadow-xl border border-neutral-200 overflow-hidden">
+          <div className="p-8">
+            <div className="flex items-center gap-4">
+              {/* Home */}
+              <div className="flex-1 flex flex-col items-center gap-3 text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                  <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`}
+                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                </div>
+                <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
+              </div>
+
+              {/* Score */}
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                {played ? (
+                  <div className="bg-ffse-navy text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-display text-4xl shadow-lg">
+                    <span className={match.score_home! >= match.score_away! ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
+                    <span className="text-neutral-500 text-2xl">–</span>
+                    <span className={match.score_away! >= match.score_home! ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
+                  </div>
+                ) : (
+                  <div className="bg-neutral-800 text-white px-6 py-3 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">{new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(new Date(match.date))}</span>
+                    <span className="text-lg font-bold">{match.time}</span>
+                  </div>
+                )}
+                {played && (
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
+                    {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
+                  </span>
+                )}
+              </div>
+
+              {/* Away */}
+              <div className="flex-1 flex flex-col items-center gap-3 text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                  <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`}
+                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                </div>
+                <span className="font-bold text-sm text-neutral-800 leading-tight">{match.away_team}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Venue */}
+          {venue && (
+            <div className="bg-neutral-50 px-6 py-3 flex items-center justify-center gap-2 border-t border-neutral-100">
+              <MapPin size={12} className="text-neutral-400 shrink-0" />
+              <span className="text-xs text-neutral-500 font-medium">{venue.name}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Stats */}
+        {played && stats.home && stats.away && (
+          <div className="bg-white rounded-3xl shadow-xl border border-neutral-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-neutral-100 flex items-center gap-3">
+              <Trophy className="text-ffse-red shrink-0" size={18} />
+              <h2 className="font-display text-xl uppercase tracking-tighter">Statistiques</h2>
+            </div>
+            <div className="px-6 py-4">
+              {/* Header */}
+              <div className="flex items-center gap-4 pb-3 mb-2 border-b-2 border-ffse-navy">
+                <div className="flex-1 text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
+                <div className="w-32"></div>
+                <div className="flex-1 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
+              </div>
+              <StatRow label="Essais" home={stats.home.tries} away={stats.away.tries} />
+              <StatRow label="Transformations" home={stats.home.conversions} away={stats.away.conversions} />
+              <StatRow label="Pénalités" home={stats.home.penalties} away={stats.away.penalties} />
+              <StatRow label="Drops" home={stats.home.drops} away={stats.away.drops} />
+              <StatRow label="Cartons jaunes" home={stats.home.yellow} away={stats.away.yellow} />
+              <StatRow label="Cartons rouges" home={stats.home.red} away={stats.away.red} />
+              <StatRow label="Bonus défensif" home={stats.home.bonus_def ? "✓" : null} away={stats.away.bonus_def ? "✓" : null} />
+            </div>
+          </div>
+        )}
+
+        {/* Date info */}
+        <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 px-6 py-4 flex items-center gap-3">
+          <Calendar className="text-neutral-400 shrink-0" size={18} />
+          <div>
+            <p className="font-bold text-sm text-neutral-800">
+              {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(match.date))}
+            </p>
+            {match.time !== "00:00" && <p className="text-xs text-neutral-400">{match.time}</p>}
+          </div>
+        </div>
+
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/:div/match/:eventId" element={<MatchPage />} />
       <Route path="/:div" element={<DivisionPage />} />
       <Route path="/:div/results" element={<DivisionPage />} />
       <Route path="/:div/results/:day" element={<DivisionPage />} />
