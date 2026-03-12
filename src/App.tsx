@@ -717,7 +717,16 @@ function MatchPage() {
             </div>
           </div>
 
-          {/* Venue */}
+          </div>
+
+        {/* Date + Venue */}
+        <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 overflow-hidden">
+          <div className="px-6 py-4 flex flex-col items-center gap-1">
+            <p className="font-bold text-sm text-neutral-800">
+              {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(match.date))}
+            </p>
+            {match.time !== "00:00" && <p className="text-xs text-neutral-400">{match.time}</p>}
+          </div>
           {venue && (
             <div className="bg-neutral-50 px-6 py-3 flex items-center justify-center gap-2 border-t border-neutral-100">
               <MapPin size={12} className="text-neutral-400 shrink-0" />
