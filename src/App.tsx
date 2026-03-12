@@ -426,9 +426,9 @@ function DivisionPage() {
                             {match.home_team}
                           </button>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0 overflow-visible">
                           <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
-                          <div className="relative">
+                          <div className="relative overflow-visible">
                             {(!!(match.bonus_off_home) || !!(match.bonus_def_home)) && (
                               <div className="absolute -top-2 -left-2 flex flex-col gap-0.5 z-10">
                                 {!!match.bonus_off_away && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BO</span>}
