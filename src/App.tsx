@@ -781,7 +781,7 @@ function MatchPage() {
                 return (
                   <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3" style={{ borderBottom: "0.3px solid #e5e5e5" }}>
                     <div className="flex items-center justify-end gap-1">
-                      {hy > 0 && <><span className="text-xs font-normal text-neutral-400">cartons j.</span><span className="font-bold text-base text-neutral-400">{hy}</span></>}
+                      {hy > 0 && <><span className="font-bold text-base text-neutral-400">{hy}</span></>}
                     </div>
                     <div className="flex justify-start pl-3">
                       <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
@@ -790,7 +790,7 @@ function MatchPage() {
                       <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
                     </div>
                     <div className="flex items-center justify-start gap-1">
-                      {ay > 0 && <><span className="font-bold text-base text-neutral-400">{ay}</span><span className="text-xs font-normal text-neutral-400">cartons j.</span></>}
+                      {ay > 0 && <><span className="font-bold text-base text-neutral-400">{ay}</span></>}
                     </div>
                   </div>
                 );
