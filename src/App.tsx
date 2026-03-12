@@ -446,6 +446,7 @@ function DivisionPage() {
                   <thead>
                     <tr className="border-b border-neutral-200 text-xs uppercase tracking-wide text-neutral-500">
                       <th className="pl-2 pr-0 py-3 w-4 md:w-10">N°</th>
+                      <th className="hidden md:table-cell px-1 py-3 w-6"></th>
                       <th className="px-1 py-3 w-9 md:w-12"></th>
                       <th className="px-2 py-3 text-left w-32 md:w-48">Équipe</th>
                       <th className="hidden md:table-cell px-2 py-3 w-24"></th>
