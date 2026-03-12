@@ -560,6 +560,7 @@ app.get("/api/match/:eventId", async (req, res) => {
         yellow:      r.cj          ?? null,
         red:         r.cr          ?? null,
         bonus_def:   r.bd          ?? null,
+        bonus_off:   r.bp          ?? null,
       };
     };
 
