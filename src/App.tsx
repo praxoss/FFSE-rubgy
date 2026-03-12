@@ -623,20 +623,24 @@ function MatchPage() {
     const h = Number(home) || 0;
     const a = Number(away) || 0;
     return (
-      <div className="flex items-center py-3 border-b border-neutral-100 last:border-0">
-        {/* Home stat : label à gauche, chiffre collé à droite */}
-        <div className="flex-1 flex items-center justify-end">
-          <span className="text-xs font-normal text-neutral-400 mr-2">{label}</span>
-          <span className={`font-bold text-base w-6 text-right ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
+      <div className="grid grid-cols-2 items-center py-3 border-b border-neutral-100 last:border-0">
+        {/* Home : chiffre + label + SVG alignés à droite */}
+        <div className="flex items-center justify-end">
+          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
+          <span className="text-xs font-normal text-neutral-400 ml-1 mr-[10px]">{label}</span>
+          {icon
+            ? <RugbyIcon type={icon} size={22} />
+            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-8 text-center">{centerLabel}</span>
+          }
         </div>
-        {/* Icon : 10px de chaque côté */}
-        <div className="flex items-center justify-center px-[10px] shrink-0">
-          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-6 text-center">{label.slice(0,2)}</span>}
-        </div>
-        {/* Away stat : chiffre collé à gauche, label à droite */}
-        <div className="flex-1 flex items-center justify-start">
-          <span className={`font-bold text-base w-6 text-left ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
-          <span className="text-xs font-normal text-neutral-400 ml-2">{label}</span>
+        {/* Away : SVG + label + chiffre alignés à gauche */}
+        <div className="flex items-center justify-start">
+          {icon
+            ? <RugbyIcon type={icon} size={22} />
+            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-8 text-center">{centerLabel}</span>
+          }
+          <span className="text-xs font-normal text-neutral-400 ml-[10px]">{label}</span>
+          <span className={`font-bold text-base ml-1 ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
         </div>
       </div>
     );
