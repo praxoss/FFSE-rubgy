@@ -623,15 +623,20 @@ function MatchPage() {
     const h = Number(home) || 0;
     const a = Number(away) || 0;
     return (
-      <div className="flex items-center gap-4 py-3 border-b border-neutral-100 last:border-0">
-        <div className={`flex-1 text-right font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>
-          {home ?? "–"} <span className="text-xs font-normal text-neutral-400">{label}</span>
+      <div className="flex items-center py-3 border-b border-neutral-100 last:border-0">
+        {/* Home stat */}
+        <div className="flex-1 flex items-center justify-end gap-2">
+          <span className="text-xs font-normal text-neutral-400">{label}</span>
+          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
         </div>
-        <div className="w-10 flex justify-center">
-          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase">{label.slice(0,2)}</span>}
+        {/* Icon */}
+        <div className="w-16 flex justify-center shrink-0">
+          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{label.slice(0,2)}</span>}
         </div>
-        <div className={`flex-1 text-left font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>
-          <span className="text-xs font-normal text-neutral-400">{label}</span> {away ?? "–"}
+        {/* Away stat */}
+        <div className="flex-1 flex items-center justify-start gap-2">
+          <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
+          <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
       </div>
     );
@@ -760,17 +765,6 @@ function MatchPage() {
             </div>
           </div>
         )}
-
-        {/* Date info */}
-        <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 px-6 py-4 flex items-center gap-3">
-          <Calendar className="text-neutral-400 shrink-0" size={18} />
-          <div>
-            <p className="font-bold text-sm text-neutral-800">
-              {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(match.date))}
-            </p>
-            {match.time !== "00:00" && <p className="text-xs text-neutral-400">{match.time}</p>}
-          </div>
-        </div>
 
       </main>
     </div>
