@@ -624,24 +624,31 @@ function MatchPage() {
     const a = Number(away) || 0;
     const centerLabel = label === "cartons jaunes" ? "CJ" : label === "cartons rouges" ? "CR" : label === "bonus offensif" ? "BO" : label === "bonus défensif" ? "BD" : label.slice(0, 2).toUpperCase();
     return (
-      <div className="grid grid-cols-2 items-center py-3 border-b border-neutral-100 last:border-0">
-        {/* Home : chiffre + label + SVG alignés à droite */}
-        <div className="flex items-center justify-end">
-          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
-          <span className="text-xs font-normal text-neutral-400 ml-1 mr-[10px]">{label}</span>
+      <div className="grid grid-cols-[1fr_auto_auto_1fr] items-center py-3 border-b border-neutral-100 last:border-0">
+        {/* Col 1 : chiffre + label ferrés à droite */}
+        <div className="grid grid-cols-[1fr_auto_auto_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
+          <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
+          <div /><div />
+          <div className="text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
+        </div>
+        {/* Col 2 : SVG home à 10px du label */}
+        <div className="pl-[10px]">
           {icon
             ? <RugbyIcon type={icon} size={22} />
-            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-8 text-center">{centerLabel}</span>
+            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
         </div>
-        {/* Away : SVG + label + chiffre alignés à gauche */}
-        <div className="flex items-center justify-start">
+        {/* Col 3 : SVG away à 10px du label */}
+        <div className="pr-[10px]">
           {icon
             ? <RugbyIcon type={icon} size={22} />
-            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider w-8 text-center">{centerLabel}</span>
+            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
           }
-          <span className="text-xs font-normal text-neutral-400 ml-[10px]">{label}</span>
-          <span className={`font-bold text-base ml-1 ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
+        </div>
+        {/* Col 4 : label + chiffre ferrés à gauche */}
+        <div className="flex items-center justify-start gap-1">
+          <span className="text-xs font-normal text-neutral-400">{label}</span>
+          <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
         </div>
       </div>
     );
