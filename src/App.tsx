@@ -431,8 +431,8 @@ function DivisionPage() {
                           <div className="relative">
                             {(!!(match.bonus_off_home) || !!(match.bonus_def_home)) && (
                               <div className="absolute -top-2 -left-2 flex flex-col gap-0.5 z-10">
-                                {!!match.bonus_off_home && <span className="text-[7px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-0.5 rounded font-mono leading-3">BO</span>}
-                                {!!match.bonus_def_home && <span className="text-[7px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-0.5 rounded font-mono leading-3">BD</span>}
+                                {!!match.bonus_off_away && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BO</span>}
+                                {!!match.bonus_def_away && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
                               </div>
                             )}
                             {(!!(match.bonus_off_away) || !!(match.bonus_def_away)) && (
