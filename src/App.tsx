@@ -599,15 +599,35 @@ function MatchPage() {
   const { match, venue, stats, ffse_url } = detail;
   const played = match.score_home !== null && match.score_away !== null;
 
-  const StatRow = ({ label, home, away }: { label: string; home: string | null; away: string | null }) => {
-    if (!home && !away) return null;
+  const RugbyIcon = ({ type, size = 20 }: { type: "essai" | "transfo" | "penalite"; size?: number }) => {
+    const icons = {
+      essai:    "https://www.lequipe.fr/img/icons/live/ico_essai.svg",
+      transfo:  "https://www.lequipe.fr/img/icons/live/ico_transfo.svg",
+      penalite: "https://www.lequipe.fr/img/icons/live/ico_penalite.svg",
+    };
+    return <img src={icons[type]} alt={type} width={size} height={size} className="inline-block" />;
+  };
+
+  const StatRow = ({ label, icon, home, away }: {
+    label: string;
+    icon: "essai" | "transfo" | "penalite" | null;
+    home: string | null;
+    away: string | null;
+  }) => {
+    if ((!home || home === "0") && (!away || away === "0")) return null;
     const h = Number(home) || 0;
     const a = Number(away) || 0;
     return (
-      <div className="flex items-center gap-4 py-2 border-b border-neutral-100 last:border-0">
-        <div className={`flex-1 text-right font-bold text-sm ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</div>
-        <div className="w-32 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">{label}</div>
-        <div className={`flex-1 text-left font-bold text-sm ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</div>
+      <div className="flex items-center gap-4 py-3 border-b border-neutral-100 last:border-0">
+        <div className={`flex-1 text-right font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>
+          {home ?? "–"} <span className="text-xs font-normal text-neutral-400">{label}</span>
+        </div>
+        <div className="w-10 flex justify-center">
+          {icon ? <RugbyIcon type={icon} size={22} /> : <span className="text-neutral-300 text-xs font-bold uppercase">{label.slice(0,2)}</span>}
+        </div>
+        <div className={`flex-1 text-left font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>
+          <span className="text-xs font-normal text-neutral-400">{label}</span> {away ?? "–"}
+        </div>
       </div>
     );
   };
@@ -699,13 +719,13 @@ function MatchPage() {
                 <div className="w-32"></div>
                 <div className="flex-1 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
               </div>
-              <StatRow label="Essais" home={stats.home.tries} away={stats.away.tries} />
-              <StatRow label="Transformations" home={stats.home.conversions} away={stats.away.conversions} />
-              <StatRow label="Pénalités" home={stats.home.penalties} away={stats.away.penalties} />
-              <StatRow label="Drops" home={stats.home.drops} away={stats.away.drops} />
-              <StatRow label="Cartons jaunes" home={stats.home.yellow} away={stats.away.yellow} />
-              <StatRow label="Cartons rouges" home={stats.home.red} away={stats.away.red} />
-              <StatRow label="Bonus défensif" home={stats.home.bonus_def ? "✓" : null} away={stats.away.bonus_def ? "✓" : null} />
+              <StatRow label="essais" icon="essai" home={stats.home.tries} away={stats.away.tries} />
+              <StatRow label="transf." icon="transfo" home={stats.home.conversions} away={stats.away.conversions} />
+              <StatRow label="pénalités" icon="penalite" home={stats.home.penalties} away={stats.away.penalties} />
+              <StatRow label="drops" icon={null} home={stats.home.drops} away={stats.away.drops} />
+              <StatRow label="cartons jaunes" icon={null} home={stats.home.yellow} away={stats.away.yellow} />
+              <StatRow label="cartons rouges" icon={null} home={stats.home.red} away={stats.away.red} />
+              <StatRow label="bonus défensif" icon={null} home={stats.home.bonus_def ? "1" : null} away={stats.away.bonus_def ? "1" : null} />
             </div>
           </div>
         )}
