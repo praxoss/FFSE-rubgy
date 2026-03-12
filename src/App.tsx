@@ -16,6 +16,7 @@ interface Ranking {
   diff: number;
   points: number;
   logo?: string | null;
+  trend?: "up" | "down" | "equal" | null;
 }
 
 interface Match {
@@ -231,7 +232,7 @@ function DivisionPage() {
             )}
           </div>
         </div>
-  
+
         {/* Ligne 2 : divisions + boutons admin */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -427,13 +428,13 @@ function DivisionPage() {
                           <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
                           <div className="bg-neutral-700 text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg">
                             {match.score_home !== null && match.score_away !== null ? (
-                                <button onClick={() => match.ffse_event_id && navigate(`/${division}/match/${match.ffse_event_id}`)}
-                                  className={match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}>
-                                  <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
-                                  <span className="text-neutral-500 text-xs">-</span>
-                                  <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
-                                </button>
-                              ) : (
+                              <button onClick={() => match.ffse_event_id && navigate(`/${division}/match/${match.ffse_event_id}`)}
+                                className={match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}>
+                                <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
+                                <span className="text-neutral-500 text-xs">-</span>
+                                <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
+                              </button>
+                            ) : (
                               <span className="text-[9px] font-sans font-bold uppercase tracking-tight text-neutral-300 text-center leading-tight">
                                 {formatShortDateTime(match.date, match.time)}
                               </span>
@@ -506,13 +507,13 @@ function DivisionPage() {
                           className="hover:bg-neutral-50 transition-colors group"
                         >
                           <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
-                            <td className="hidden md:table-cell px-1 py-3">
-                              {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
-                              {team.trend === "down" && <span className="text-red-500 text-xs font-bold">▼</span>}
-                              {team.trend === "equal" && <span className="text-neutral-300 text-xs font-bold">=</span>}
-                              {team.trend === null && <span className="text-neutral-200 text-xs">–</span>}
-                            </td>
-                            <td className="px-1 py-3">
+                          <td className="hidden md:table-cell px-1 py-3">
+                            {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
+                            {team.trend === "down" && <span className="text-red-500 text-xs font-bold">▼</span>}
+                            {team.trend === "equal" && <span className="text-neutral-300 text-xs font-bold">=</span>}
+                            {team.trend === null && <span className="text-neutral-200 text-xs">–</span>}
+                          </td>
+                          <td className="px-1 py-3">
                             <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden">
                               <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
                                 alt="" className="w-full h-full object-contain p-1.5" referrerPolicy="no-referrer" />
@@ -601,7 +602,7 @@ function MatchPage() {
     </div>
   );
 
-  const { match, venue, stats, ffse_url } = detail;
+  const { match, venue, stats } = detail;
   const played = match.score_home !== null && match.score_away !== null;
 
   const RugbyIcon = ({ type, size = 20 }: { type: "essai" | "transfo" | "penalite"; size?: number }) => {
@@ -613,6 +614,17 @@ function MatchPage() {
     return <img src={icons[type]} alt={type} width={size} height={size} className="inline-block" />;
   };
 
+  const Cards = ({ y, r }: { y: number; r: number }) => (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: y }).map((_, i) => (
+        <img key={`y${i}`} src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
+      ))}
+      {Array.from({ length: r }).map((_, i) => (
+        <img key={`r${i}`} src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={14} height={20} alt="rouge" />
+      ))}
+    </div>
+  );
+
   const StatRow = ({ label, icon, home, away }: {
     label: string;
     icon: "essai" | "transfo" | "penalite" | null;
@@ -622,14 +634,13 @@ function MatchPage() {
     if ((!home || home === "0") && (!away || away === "0")) return null;
     const h = Number(home) || 0;
     const a = Number(away) || 0;
-    const centerLabel = label === "cartons jaunes" ? "CJ" : label === "cartons rouges" ? "CR" : label === "bonus offensif" ? "BO" : label === "bonus défensif" ? "BD" : label.slice(0, 2).toUpperCase();
+    const centerLabel = label === "drops" ? "DR" : label.slice(0, 2).toUpperCase();
     return (
       <div className="grid grid-cols-[1fr_auto_auto_1fr] items-center py-3 border-b border-neutral-100 last:border-0">
         {/* Col 1 : chiffre + label ferrés à droite */}
-        <div className="grid grid-cols-[1fr_auto_auto_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
-          <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
-          <div /><div />
-          <div className="text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
+        <div className="flex items-center justify-end gap-1">
+          <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
+          <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
         {/* Col 2 : SVG home à 10px du label */}
         <div className="pl-[10px]">
@@ -676,7 +687,7 @@ function MatchPage() {
           <div className="p-8">
             <div className="flex items-center gap-4">
               {/* Home */}
-              <div className="flex-1 flex flex-col items-center gap-3 text-center relative">
+              <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
                   <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`}
                     alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
@@ -756,19 +767,35 @@ function MatchPage() {
             </div>
             <div className="px-6 py-4">
               {/* Header */}
-              <div className="flex items-center gap-4 pb-3 mb-2 border-b-2 border-ffse-navy">
-                <div className="flex-1 text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
-                <div className="w-32"></div>
-                <div className="flex-1 text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
+              <div className="grid grid-cols-[1fr_auto_auto_1fr] pb-3 mb-2 border-b-2 border-ffse-navy">
+                <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
+                <div /><div />
+                <div className="text-left text-xs font-bold uppercase tracking-wider text-neutral-500">{match.away_team}</div>
               </div>
               <StatRow label="essais" icon="essai" home={stats.home.tries} away={stats.away.tries} />
               <StatRow label="transf." icon="transfo" home={stats.home.conversions} away={stats.away.conversions} />
               <StatRow label="pénalités" icon="penalite" home={stats.home.penalties} away={stats.away.penalties} />
               <StatRow label="drops" icon={null} home={stats.home.drops} away={stats.away.drops} />
-              <StatRow label="cartons jaunes" icon={null} home={stats.home.yellow} away={stats.away.yellow} />
-              <StatRow label="cartons rouges" icon={null} home={stats.home.red} away={stats.away.red} />
-              <StatRow label="bonus offensif" icon={null} home={stats.home.bonus_off ? "✓" : null} away={stats.away.bonus_off ? "✓" : null} />
-              <StatRow label="bonus défensif" icon={null} home={stats.home.bonus_def ? "✓" : null} away={stats.away.bonus_def ? "✓" : null} />
+              {/* Cartons */}
+              {(() => {
+                const hy = Number(stats.home.yellow) || 0;
+                const hr = Number(stats.home.red) || 0;
+                const ay = Number(stats.away.yellow) || 0;
+                const ar = Number(stats.away.red) || 0;
+                if (hy === 0 && hr === 0 && ay === 0 && ar === 0) return null;
+                return (
+                  <div className="grid grid-cols-[1fr_auto_auto_1fr] items-center py-3 border-b border-neutral-100">
+                    <div className="flex justify-end pr-[10px]">
+                      {(hy > 0 || hr > 0) ? <Cards y={hy} r={hr} /> : <span className="text-neutral-200 text-xs">–</span>}
+                    </div>
+                    <div className="text-neutral-300 text-xs font-bold uppercase tracking-wider px-1">CJ</div>
+                    <div className="text-neutral-300 text-xs font-bold uppercase tracking-wider px-1">CR</div>
+                    <div className="flex justify-start pl-[10px]">
+                      {(ay > 0 || ar > 0) ? <Cards y={ay} r={ar} /> : <span className="text-neutral-200 text-xs">–</span>}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
