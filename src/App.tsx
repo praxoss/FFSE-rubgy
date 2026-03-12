@@ -772,26 +772,48 @@ function MatchPage() {
               <StatRow label="transf." icon="transfo" home={stats.home.conversions} away={stats.away.conversions} />
               <StatRow label="pénalités" icon="penalite" home={stats.home.penalties} away={stats.away.penalties} />
               <StatRow label="drops" icon={null} home={stats.home.drops} away={stats.away.drops} />
-              {/* Cartons */}
+              
+              {/* Cartons jaunes */}
               {(() => {
                 const hy = Number(stats.home.yellow) || 0;
-                const hr = Number(stats.home.red) || 0;
                 const ay = Number(stats.away.yellow) || 0;
-                const ar = Number(stats.away.red) || 0;
-                if (hy === 0 && hr === 0 && ay === 0 && ar === 0) return null;
+                if (hy === 0 && ay === 0) return null;
                 return (
-                  <div
-                    className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3"
-                    style={{ borderBottom: "0.3px solid #e5e5e5" }}
-                  >
-                    <div />
-                    <div className="flex justify-center">
-                      {(hy > 0 || hr > 0) && <Cards y={hy} r={hr} />}
+                  <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3" style={{ borderBottom: "0.3px solid #e5e5e5" }}>
+                    <div className="flex items-center justify-end gap-1">
+                      {hy > 0 && <><span className="text-xs font-normal text-neutral-400">cartons j.</span><span className="font-bold text-base text-neutral-400">{hy}</span></>}
                     </div>
-                    <div className="flex justify-center">
-                      {(ay > 0 || ar > 0) && <Cards y={ay} r={ar} />}
+                    <div className="flex justify-start pl-3">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
                     </div>
-                    <div />
+                    <div className="flex justify-end pr-3">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />
+                    </div>
+                    <div className="flex items-center justify-start gap-1">
+                      {ay > 0 && <><span className="font-bold text-base text-neutral-400">{ay}</span><span className="text-xs font-normal text-neutral-400">cartons j.</span></>}
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* Cartons rouges */}
+              {(() => {
+                const hr = Number(stats.home.red) || 0;
+                const ar = Number(stats.away.red) || 0;
+                if (hr === 0 && ar === 0) return null;
+                return (
+                  <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3" style={{ borderBottom: "0.3px solid #e5e5e5" }}>
+                    <div className="flex items-center justify-end gap-1">
+                      {hr > 0 && <><span className="text-xs font-normal text-neutral-400">cartons r.</span><span className="font-bold text-base text-neutral-400">{hr}</span></>}
+                    </div>
+                    <div className="flex justify-start pl-3">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />
+                    </div>
+                    <div className="flex justify-end pr-3">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="rouge" />
+                    </div>
+                    <div className="flex items-center justify-start gap-1">
+                      {ar > 0 && <><span className="font-bold text-base text-neutral-400">{ar}</span><span className="text-xs font-normal text-neutral-400">cartons r.</span></>}
+                    </div>
                   </div>
                 );
               })()}
