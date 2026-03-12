@@ -21,6 +21,10 @@ interface Ranking {
 interface Match {
   id: number;
   ffse_event_id?: number;
+  bonus_off_home?: number;
+  bonus_def_home?: number;
+  bonus_off_away?: number;
+  bonus_def_away?: number;
   matchday: number;
   date: string;
   time: string;
