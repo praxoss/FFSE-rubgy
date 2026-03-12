@@ -653,9 +653,7 @@ function MatchPage() {
           <div className="text-[10px] uppercase tracking-widest text-blue-300/60 font-bold">
             {division.toUpperCase()} · Journée {match.matchday}
           </div>
-          <a href={ffse_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider transition-colors">
-            FFSE ↗
-          </a>
+          <div className="w-10" />
         </div>
       </header>
 
