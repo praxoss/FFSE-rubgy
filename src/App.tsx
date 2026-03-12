@@ -661,10 +661,18 @@ function MatchPage() {
           <div className="p-8">
             <div className="flex items-center gap-4">
               {/* Home */}
-              <div className="flex-1 flex flex-col items-center gap-3 text-center">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
-                  <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`}
-                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+              <div className="flex-1 flex flex-col items-center gap-3 text-center relative">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                    <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`}
+                      alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                  </div>
+                  {played && (stats.home?.bonus_off || stats.home?.bonus_def) && (
+                    <div className="absolute -top-2 -right-2 flex flex-col gap-0.5">
+                      {stats.home?.bonus_off && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BO</span>}
+                      {stats.home?.bonus_def && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BD</span>}
+                    </div>
+                  )}
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
               </div>
@@ -684,27 +692,25 @@ function MatchPage() {
                   </div>
                 )}
                 {played && (
-                  <div className="flex items-center justify-between px-8 pb-4">
-                    <div className="flex gap-1 min-w-[40px]">
-                      {stats.home?.bonus_off && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BO</span>}
-                      {stats.home?.bonus_def && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BD</span>}
-                    </div>
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
-                      {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
-                    </span>
-                    <div className="flex gap-1 min-w-[40px] justify-end">
-                      {stats.away?.bonus_off && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BO</span>}
-                      {stats.away?.bonus_def && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BD</span>}
-                    </div>
-                  </div>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
+                    {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
+                  </span>
                 )}
               </div>
 
               {/* Away */}
-              <div className="flex-1 flex flex-col items-center gap-3 text-center">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
-                  <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`}
-                    alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+              <div className="flex-1 flex flex-col items-center gap-3 text-center relative">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                    <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`}
+                      alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                  </div>
+                  {played && (stats.away?.bonus_off || stats.away?.bonus_def) && (
+                    <div className="absolute -top-2 -left-2 flex flex-col gap-0.5">
+                      {stats.away?.bonus_off && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BO</span>}
+                      {stats.away?.bonus_def && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BD</span>}
+                    </div>
+                  )}
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.away_team}</span>
               </div>
