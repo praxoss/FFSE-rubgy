@@ -184,20 +184,33 @@ function DivisionPage() {
   };
 
   const Header = () => (
-    <header className="bg-ffse-navy text-white py-6 px-4 border-b-4 border-ffse-red sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/")} className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border border-neutral-200 shadow-md overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
-              <Trophy className="text-ffse-navy" size={30} />
+    <header className="bg-ffse-navy text-white px-4 pt-4 pb-3 border-b-4 border-ffse-red sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto flex flex-col gap-3">
+        {/* Ligne 1 : logo + titre + login */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/")} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-neutral-200 shadow-md overflow-hidden shrink-0 hover:opacity-80 transition-opacity">
+              <Trophy className="text-ffse-navy" size={22} />
             </button>
             <div>
-              <h1 className="font-display text-2xl md:text-3xl tracking-tighter uppercase leading-none">
+              <h1 className="font-display text-xl md:text-3xl tracking-tighter uppercase leading-none">
                 Rugby <span className="text-ffse-red">{division.toUpperCase()}</span> FFSE
               </h1>
-              <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest mt-1">Saison 2025 - 2026</p>
+              <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest">Saison 2025 - 2026</p>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            {updating && <RefreshCw size={12} className="animate-spin text-blue-400" />}
+            {user ? (
+              <button onClick={handleLogout} className="text-blue-300 hover:text-white transition-colors"><LogOut size={20} /></button>
+            ) : (
+              <button onClick={handleLogin} className="text-blue-300 hover:text-white transition-colors"><LogIn size={22} /></button>
+            )}
+          </div>
+        </div>
+  
+        {/* Ligne 2 : divisions + boutons admin */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {(["d1", "d2", "d3", "d4"] as Division[]).map((d, i) => (
               <span key={d} className="flex items-center gap-2">
@@ -209,27 +222,17 @@ function DivisionPage() {
               </span>
             ))}
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-end gap-1">
-                {updating && <RefreshCw size={12} className="animate-spin text-blue-400" />}
-                <div className="flex gap-3">
-                  <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
-                  <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
-                    <button onClick={async () => {
-                      if (!confirm("Reset DB ?")) return;
-                      const idToken = await user!.getIdToken();
-                      await fetch(`${window.location.origin}/admin/reset-db`, { method: "POST", headers: { "Authorization": `Bearer ${idToken}` } });
-                      alert("DB réinitialisée — fais une MAJ");
-                    }} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">Reset</button>
-                </div>
-              </div>
-              <button onClick={handleLogout} className="text-blue-300 hover:text-white transition-colors"><LogOut size={20} /></button>
+          {user && (
+            <div className="flex gap-3">
+              <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
+              <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
+              <button onClick={async () => {
+                if (!confirm("Reset DB ?")) return;
+                const idToken = await user!.getIdToken();
+                await fetch(`${window.location.origin}/admin/reset-db`, { method: "POST", headers: { "Authorization": `Bearer ${idToken}` } });
+                alert("DB réinitialisée — fais une MAJ");
+              }} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">Reset</button>
             </div>
-          ) : (
-            <button onClick={handleLogin} className="text-blue-300 hover:text-white transition-colors"><LogIn size={22} /></button>
           )}
         </div>
       </div>
