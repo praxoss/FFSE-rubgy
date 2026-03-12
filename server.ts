@@ -60,6 +60,7 @@ try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ffse_event_id INTEGER,
         matchday INTEGER,
         division TEXT NOT NULL DEFAULT 'd3',
         date TEXT,
@@ -264,6 +265,7 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         : "Terrain FFSE";
 
       return {
+        ffse_event_id: e.id,
         matchday: parseInt(e.day, 10) || 999,
         date,
         time,
@@ -346,6 +348,7 @@ async function refreshDivision(division: Division) {
     const home = teamMap.get(m.home_team_id);
     const away = teamMap.get(m.away_team_id);
     return {
+      ffse_event_id: m.ffse_event_id,
       matchday:   m.matchday,
       division,
       date:       m.date,
@@ -361,9 +364,10 @@ async function refreshDivision(division: Division) {
   });
 
   const upsertMatch = db.prepare(`
-    INSERT INTO matches (matchday, division, date, time, location, home_team, away_team, score_home, score_away, updated_at)
-    VALUES (@matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, CURRENT_TIMESTAMP)
+    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, updated_at)
+    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, CURRENT_TIMESTAMP)
     ON CONFLICT(matchday, division, home_team, away_team) DO UPDATE SET
+      ffse_event_id = excluded.ffse_event_id,
       score_home = COALESCE(excluded.score_home, matches.score_home),
       score_away = COALESCE(excluded.score_away, matches.score_away),
       date       = excluded.date,
@@ -505,6 +509,71 @@ app.get("/admin/debug-fetch", authenticateAdmin, async (req, res) => {
       : { raw: (await response.text()).substring(0, 600) };
     res.json({ status: response.status, finalUrl: targetUrl, body });
   } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/match/:eventId", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Récupérer le match en DB
+    const match = db.prepare(`
+      SELECT m.*, c_home.logo AS home_logo, c_away.logo AS away_logo
+      FROM matches m
+      LEFT JOIN clubs c_home ON m.home_team = c_home.name
+      LEFT JOIN clubs c_away ON m.away_team = c_away.name
+      WHERE m.ffse_event_id = ?
+    `).get(eventId) as any;
+
+    if (!match) return res.status(404).json({ error: "Match not found" });
+
+    // Fetch stats depuis FFSE
+    const eventRes = await fetch(`${FFSE_BASE}/sportspress/v2/events/${eventId}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!eventRes.ok) return res.status(500).json({ error: "Failed to fetch event" });
+    const event = await eventRes.json();
+
+    // Fetch venue
+    let venue = null;
+    if (event.venues?.length > 0) {
+      const venueRes = await fetch(`${FFSE_BASE}/sportspress/v2/venues/${event.venues[0]}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (venueRes.ok) venue = await venueRes.json();
+    }
+
+    // Parser les stats
+    const homeId = String(event.teams?.[0]);
+    const awayId = String(event.teams?.[1]);
+    const results = event.results || {};
+
+    const parseStats = (teamId: string) => {
+      const r = results[teamId];
+      if (!r) return null;
+      return {
+        tries:       r.tries       ?? null,
+        conversions: r.conversions ?? null,
+        penalties:   r.p           ?? null,
+        drops:       r.d           ?? null,
+        yellow:      r.cj          ?? null,
+        red:         r.cr          ?? null,
+        bonus_def:   r.bd          ?? null,
+      };
+    };
+
+    res.json({
+      match,
+      venue: venue ? { id: venue.id, name: venue.name, slug: venue.slug } : null,
+      stats: {
+        home: parseStats(homeId),
+        away: parseStats(awayId),
+      },
+      ffse_url: event.link,
+    });
+  } catch (error: any) {
+    console.error("[match] Error:", error);
     res.status(500).json({ error: error.message });
   }
 });
