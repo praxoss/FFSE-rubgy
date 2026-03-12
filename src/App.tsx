@@ -680,9 +680,19 @@ function MatchPage() {
                   </div>
                 )}
                 {played && (
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
-                    {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
-                  </span>
+                  <div className="flex items-center justify-between px-8 pb-4">
+                    <div className="flex gap-1 min-w-[40px]">
+                      {stats.home?.bonus_off && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BO</span>}
+                      {stats.home?.bonus_def && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BD</span>}
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
+                      {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
+                    </span>
+                    <div className="flex gap-1 min-w-[40px] justify-end">
+                      {stats.away?.bonus_off && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BO</span>}
+                      {stats.away?.bonus_def && <span className="text-[10px] font-black border-2 border-ffse-navy text-ffse-navy px-1.5 py-0.5 rounded font-mono">BD</span>}
+                    </div>
+                  </div>
                 )}
               </div>
 
