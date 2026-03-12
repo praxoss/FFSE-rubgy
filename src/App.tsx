@@ -719,6 +719,7 @@ function MatchPage() {
               </div>
             </div>
           </div>
+        </div>
 
         {/* Date + Venue */}
         <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 overflow-hidden">
