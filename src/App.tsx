@@ -226,12 +226,6 @@ function DivisionPage() {
             <div className="flex gap-3">
               <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
               <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
-              <button onClick={async () => {
-                if (!confirm("Reset DB ?")) return;
-                const idToken = await user!.getIdToken();
-                await fetch(`${window.location.origin}/admin/reset-db`, { method: "POST", headers: { "Authorization": `Bearer ${idToken}` } });
-                alert("DB réinitialisée — fais une MAJ");
-              }} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">Reset</button>
             </div>
           )}
         </div>
