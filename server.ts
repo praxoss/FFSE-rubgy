@@ -574,20 +574,64 @@ async function refreshDivision(division: Division) {
 
   db.transaction(() => {
     // Sauvegarder positions actuelles avant MAJ
-    const currentRankings = db.prepare(
-      "SELECT team, points FROM rankings WHERE division = ? ORDER BY points DESC, diff DESC"
-    ).all(division) as any[];
-
-    if (currentRankings.length > 0) {
-      const savedAt = new Date().toISOString();
-      const saveHistory = db.prepare(`
-        INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
-        VALUES (?, ?, ?, ?, ?)
-      `);
-      currentRankings.forEach((r, idx) => {
-        saveHistory.run(r.team, division, idx + 1, r.points, savedAt);
-      });
-    }
+      const currentRankings = db.prepare(
+        "SELECT team, points FROM rankings WHERE division = ? ORDER BY points DESC, diff DESC"
+      ).all(division) as any[];
+      
+      if (currentRankings.length > 0) {
+        const savedAt = new Date().toISOString();
+        const saveHistory = db.prepare(`
+          INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        currentRankings.forEach((r, idx) => {
+          saveHistory.run(r.team, division, idx + 1, r.points, savedAt);
+        });
+      } else {
+        // Première MAJ — initialiser depuis J-1
+        const allMatchesInDb = db.prepare(
+          "SELECT * FROM matches WHERE division = ? AND score_home IS NOT NULL ORDER BY matchday ASC"
+        ).all(division) as any[];
+      
+        if (allMatchesInDb.length > 0) {
+          const maxMatchday = Math.max(...allMatchesInDb.map((m: any) => m.matchday));
+          const prevMatches = allMatchesInDb.filter((m: any) => m.matchday < maxMatchday);
+      
+          if (prevMatches.length > 0) {
+            // Calculer points par équipe à J-1
+            const pointsMap = new Map<string, number>();
+            for (const m of prevMatches) {
+              const home = m.home_team;
+              const away = m.away_team;
+              if (!pointsMap.has(home)) pointsMap.set(home, 0);
+              if (!pointsMap.has(away)) pointsMap.set(away, 0);
+      
+              if (m.score_home > m.score_away) {
+                pointsMap.set(home, pointsMap.get(home)! + 4);
+              } else if (m.score_away > m.score_home) {
+                pointsMap.set(away, pointsMap.get(away)! + 4);
+              } else {
+                pointsMap.set(home, pointsMap.get(home)! + 2);
+                pointsMap.set(away, pointsMap.get(away)! + 2);
+              }
+            }
+      
+            // Trier et sauvegarder comme historique J-1
+            const sorted = Array.from(pointsMap.entries())
+              .sort((a, b) => b[1] - a[1]);
+      
+            const savedAt = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); // -7 jours
+            const saveHistory = db.prepare(`
+              INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+              VALUES (?, ?, ?, ?, ?)
+            `);
+            sorted.forEach(([team, pts], idx) => {
+              saveHistory.run(team, division, idx + 1, pts, savedAt);
+            });
+            console.log(`[history] ${division.toUpperCase()} initialisé depuis J${maxMatchday - 1}`);
+          }
+        }
+      }
 
     for (const [id, team] of teamMap) {
       const canonicalName = rankingNameMap.get(id) ?? team.name;
