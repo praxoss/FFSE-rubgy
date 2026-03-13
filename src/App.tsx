@@ -409,7 +409,7 @@ function DivisionPage() {
 
     {/* Cartons */}
     {(yellowCards > 0 || redCards > 0) && (
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center gap-4 mb-3">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center justify-center gap-4 mb-3">
         {yellowCards > 0 && (
           <div className="flex items-center gap-2">
             <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
