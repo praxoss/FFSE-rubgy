@@ -703,11 +703,13 @@ function MatchPage() {
             <div className="flex items-center gap-4">
               {/* Home */}
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
-                <span className="text-4xl h-10 flex items-center justify-center">
-                  {match.score_home! > match.score_away! ? "👑" : ""}
-                </span>
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
-                  <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                <div className="relative overflow-visible">
+                  {match.score_home! > match.score_away! && (
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-4xl pointer-events-none select-none z-10">👑</span>
+                  )}
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                    <img src={match.home_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.home_team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                  </div>
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
               </div>
@@ -749,11 +751,13 @@ function MatchPage() {
         
               {/* Away */}
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
-                <span className="text-4xl h-10 flex items-center justify-center">
-                  {match.score_away! > match.score_home! ? "👑" : ""}
-                </span>
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
-                  <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                <div className="relative overflow-visible">
+                  {match.score_away! > match.score_home! && (
+                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-4xl pointer-events-none select-none z-10">👑</span>
+                  )}
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-neutral-100 shadow-md overflow-hidden">
+                    <img src={match.away_logo || `https://api.dicebear.com/7.x/initials/svg?seed=${match.away_team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                  </div>
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.away_team}</span>
               </div>
