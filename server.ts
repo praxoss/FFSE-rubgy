@@ -6,6 +6,7 @@ import admin from "firebase-admin";
 import cron from "node-cron";
 import path from "path";
 
+
 dotenv.config();
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
