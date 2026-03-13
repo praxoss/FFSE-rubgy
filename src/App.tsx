@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
+import StatsPage from "./StatsPage";
 import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut } from "lucide-react";
 import { motion } from "motion/react";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, isFirebaseConfigured } from "./firebase";
@@ -636,7 +637,13 @@ function DivisionPage() {
           <section className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
               <Trophy className="text-ffse-red shrink-0" size={22} />
-              <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Classement {division.toUpperCase()}</h2>
+              <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter flex-1">Classement {division.toUpperCase()}</h2>
+              <button
+                onClick={() => navigate(`/${division}/stats`)}
+                className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 hover:text-ffse-navy transition-colors"
+              >
+                Classements spécifiques →
+              </button>
             </div>
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-neutral-200">
               <div className="overflow-x-auto">
@@ -1016,6 +1023,7 @@ export default function App() {
       <Route path="/:div/results" element={<DivisionPage />} />
       <Route path="/:div/results/:day" element={<DivisionPage />} />
       <Route path="/:div/club/:club" element={<DivisionPage />} />
+      <Route path="/:div/stats" element={<StatsPage />} />
     </Routes>
   );
 }
