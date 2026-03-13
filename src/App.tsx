@@ -391,13 +391,11 @@ function DivisionPage() {
       {/* Bonus */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3">
         <div className="flex justify-end pr-4 gap-1">
-          {bonusOff > 0 && <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>}
-          {bonusOff === 0 && <span className="font-display text-3xl text-neutral-200">0</span>}
+          <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>
         </div>
         <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
         <div className="flex justify-start pl-4 gap-1">
-          {bonusDef > 0 && <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>}
-          {bonusDef === 0 && <span className="font-display text-3xl text-neutral-200">0</span>}
+          <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>
         </div>
       </div>
     </div>
