@@ -529,6 +529,52 @@ async function refreshDivision(division: Division) {
     db.prepare("INSERT OR REPLACE INTO metadata (key, value) VALUES ('last_update', CURRENT_TIMESTAMP)").run();
   })();
 
+  // Fetcher les stats détaillées pour les matchs joués sans essais/cartons
+  const matchesMissingStats = db.prepare(`
+    SELECT ffse_event_id FROM matches 
+    WHERE division = ? 
+    AND score_home IS NOT NULL 
+    AND tries_home = 0 
+    AND tries_away = 0
+    AND ffse_event_id IS NOT NULL
+  `).all(division) as any[];
+
+  console.log(`[refresh] ${division.toUpperCase()} — ${matchesMissingStats.length} matches missing stats, fetching...`);
+
+  for (const m of matchesMissingStats) {
+    try {
+      const res = await fetch(`${FFSE_BASE}/sportspress/v2/events/${m.ffse_event_id}`, {
+        headers: { Accept: "application/json" }
+      });
+      if (!res.ok) continue;
+      const event = await res.json();
+      const homeId = String(event.teams?.[0]);
+      const awayId = String(event.teams?.[1]);
+      const results = event.results || {};
+
+      db.prepare(`
+        UPDATE matches SET
+          tries_home  = @tries_home,
+          tries_away  = @tries_away,
+          yellow_home = @yellow_home,
+          yellow_away = @yellow_away,
+          red_home    = @red_home,
+          red_away    = @red_away
+        WHERE ffse_event_id = @ffse_event_id
+      `).run({
+        ffse_event_id: m.ffse_event_id,
+        tries_home:  Number(results[homeId]?.tries)  || 0,
+        tries_away:  Number(results[awayId]?.tries)  || 0,
+        yellow_home: Number(results[homeId]?.cj)     || 0,
+        yellow_away: Number(results[awayId]?.cj)     || 0,
+        red_home:    Number(results[homeId]?.cr)     || 0,
+        red_away:    Number(results[awayId]?.cr)     || 0,
+      });
+    } catch (e) {
+      console.warn(`[refresh] Failed to fetch stats for event ${m.ffse_event_id}:`, e);
+    }
+  }
+
   console.log(`[refresh] ${division.toUpperCase()} done — ${allMatches.length} matches, ${allRankings.length} teams`);
   return { allMatches, allRankings };
 }
