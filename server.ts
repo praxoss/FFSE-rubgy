@@ -512,15 +512,25 @@ async function refreshDivision(division: Division) {
     }
     for (const m of allMatches) {
       const { home_logo, away_logo, ...matchData } = m;
+      const th = matchData.tries_home ?? 0;
+      const ta = matchData.tries_away ?? 0;
+      const sh = matchData.score_home;
+      const sa = matchData.score_away;
+      const played = sh !== null && sa !== null;
+  
       upsertMatch.run({
-        ...matchData,
-        tries_home: matchData.tries_home ?? 0,
-        tries_away: matchData.tries_away ?? 0,
-        yellow_home: matchData.yellow_home ?? 0,
-        yellow_away: matchData.yellow_away ?? 0,
-        red_home: matchData.red_home ?? 0,
-        red_away: matchData.red_away ?? 0,
-      });
+          ...matchData,
+          tries_home: th,
+          tries_away: ta,
+          yellow_home: matchData.yellow_home ?? 0,
+          yellow_away: matchData.yellow_away ?? 0,
+          red_home: matchData.red_home ?? 0,
+          red_away: matchData.red_away ?? 0,
+          bonus_off_home: played && (th - ta) >= 3 ? 1 : 0,
+          bonus_off_away: played && (ta - th) >= 3 ? 1 : 0,
+          bonus_def_home: played && sh! < sa! && (sa! - sh!) <= 7 ? 1 : 0,
+          bonus_def_away: played && sa! < sh! && (sh! - sa!) <= 7 ? 1 : 0,
+        });
     }
     if (allRankings.length > 0) {
       db.prepare("DELETE FROM rankings WHERE division = ?").run(division);
