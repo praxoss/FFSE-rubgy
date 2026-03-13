@@ -742,11 +742,6 @@ function MatchPage() {
                     <span className="text-lg font-bold">{match.time}</span>
                   </div>
                 )}
-                {played && (
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
-                    {match.score_home! > match.score_away! ? match.home_team : match.score_away! > match.score_home! ? match.away_team : "Nul"} gagne
-                  </span>
-                )}
               </div>
         
               {/* Away */}
