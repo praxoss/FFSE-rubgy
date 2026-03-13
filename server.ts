@@ -403,6 +403,12 @@ async function refreshDivision(division: Division) {
       away_logo:  away?.logo ?? null,
       score_home: m.score_home,
       score_away: m.score_away,
+      tries_home: m.tries_home,
+      tries_away: m.tries_away,
+      yellow_home: m.yellow_home,
+      yellow_away: m.yellow_away,
+      red_home: m.red_home,
+      red_away: m.red_away,
       bonus_off_home: m.bonus_off_home,
       bonus_def_home: m.bonus_def_home,
       bonus_off_away: m.bonus_off_away,
@@ -562,23 +568,38 @@ async function refreshDivision(division: Division) {
       const awayId = String(event.teams?.[1]);
       const results = event.results || {};
 
+      const th = Number(results[homeId]?.tries) || 0;
+      const ta = Number(results[awayId]?.tries) || 0;
+      const matchRow = db.prepare(`SELECT score_home, score_away FROM matches WHERE ffse_event_id = ?`).get(m.ffse_event_id) as any;
+      const sh = matchRow?.score_home ?? null;
+      const sa = matchRow?.score_away ?? null;
+      const played = sh !== null && sa !== null;
+
       db.prepare(`
         UPDATE matches SET
-          tries_home  = @tries_home,
-          tries_away  = @tries_away,
-          yellow_home = @yellow_home,
-          yellow_away = @yellow_away,
-          red_home    = @red_home,
-          red_away    = @red_away
+          tries_home     = @tries_home,
+          tries_away     = @tries_away,
+          yellow_home    = @yellow_home,
+          yellow_away    = @yellow_away,
+          red_home       = @red_home,
+          red_away       = @red_away,
+          bonus_off_home = @bonus_off_home,
+          bonus_off_away = @bonus_off_away,
+          bonus_def_home = @bonus_def_home,
+          bonus_def_away = @bonus_def_away
         WHERE ffse_event_id = @ffse_event_id
       `).run({
-        ffse_event_id: m.ffse_event_id,
-        tries_home:  Number(results[homeId]?.tries)  || 0,
-        tries_away:  Number(results[awayId]?.tries)  || 0,
-        yellow_home: Number(results[homeId]?.cj)     || 0,
-        yellow_away: Number(results[awayId]?.cj)     || 0,
-        red_home:    Number(results[homeId]?.cr)     || 0,
-        red_away:    Number(results[awayId]?.cr)     || 0,
+        ffse_event_id:  m.ffse_event_id,
+        tries_home:     th,
+        tries_away:     ta,
+        yellow_home:    Number(results[homeId]?.cj) || 0,
+        yellow_away:    Number(results[awayId]?.cj) || 0,
+        red_home:       Number(results[homeId]?.cr) || 0,
+        red_away:       Number(results[awayId]?.cr) || 0,
+        bonus_off_home: played && (th - ta) >= 3 ? 1 : 0,
+        bonus_off_away: played && (ta - th) >= 3 ? 1 : 0,
+        bonus_def_home: played && sh < sa && (sa - sh) <= 7 ? 1 : 0,
+        bonus_def_away: played && sa < sh && (sh - sa) <= 7 ? 1 : 0,
       });
     } catch (e) {
       console.warn(`[refresh] Failed to fetch stats for event ${m.ffse_event_id}:`, e);
