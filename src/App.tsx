@@ -838,12 +838,11 @@ function MatchPage() {
                         {!!match.bonus_def_away && <span className="text-[12px] font-black border border-ffse-navy text-ffse-navy bg-white px-1 py-1 rounded font-mono leading-4">BD</span>}
                       </div>
                     )}
-                    {(!!(stats.away?.bonus_off) || !!(stats.away?.bonus_def)) && (
-                      <div className="absolute -top-2 -right-2 flex flex-col gap-0.5 z-10">
-                        {stats.away?.bonus_off && <span className="text-[15px] font-black text-white bg-[#DAB455] px-1 py-1 rounded font-mono leading-4">BO</span>}
-                        {stats.away?.bonus_def && <span className="text-[15px] font-black border border-ffse-navy text-ffse-navy bg-white px-1 py-1 rounded font-mono leading-4">BD</span>}
-                      </div>
-                    )}
+                    <div className="bg-ffse-navy text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-display text-4xl shadow-lg">
+                      <span className={match.score_home! >= match.score_away! ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
+                      <span className="text-neutral-500 text-2xl">–</span>
+                      <span className={match.score_away! >= match.score_home! ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-neutral-800 text-white px-6 py-3 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
