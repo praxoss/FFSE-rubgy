@@ -430,13 +430,13 @@ function DivisionPage() {
                           <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
                           <div className="relative overflow-visible">
                             {(!!(match.bonus_off_home) || !!(match.bonus_def_home)) && (
-                              <div className="absolute -top-2 -left-2 flex flex-col gap-0.5 z-10">
+                              <div className="absolute -top-3 -left-2 flex flex-col gap-0.5 z-10">
                                 {!!match.bonus_off_home && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BO</span>}
                                 {!!match.bonus_def_home && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
                               </div>
                             )}
                             {(!!(match.bonus_off_away) || !!(match.bonus_def_away)) && (
-                              <div className="absolute -top-2 -right-2 flex flex-col gap-0.5 z-10">
+                              <div className="absolute -top-3 -right-2 flex flex-col gap-0.5 z-10">
                                 {!!match.bonus_off_away && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BO</span>}
                                 {!!match.bonus_def_away && <span className="text-[9px] font-black border-2 border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
                               </div>
@@ -719,7 +719,7 @@ function MatchPage() {
                 {played ? (
                   <div className="relative">
                     {(!!(stats.home?.bonus_off) || !!(stats.home?.bonus_def)) && (
-                      <div className="absolute -top-2 -left-2 flex flex-col gap-0.5 z-10">
+                      <div className="absolute -top-3 -left-2 flex flex-col gap-0.5 z-10">
                         {stats.home?.bonus_off && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BO</span>}
                         {stats.home?.bonus_def && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BD</span>}
                       </div>
@@ -730,7 +730,7 @@ function MatchPage() {
                       <span className={match.score_away! >= match.score_home! ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
                     </div>
                     {(!!(stats.away?.bonus_off) || !!(stats.away?.bonus_def)) && (
-                      <div className="absolute -top-2 -right-2 flex flex-col gap-0.5 z-10">
+                      <div className="absolute -top-3 -right-2 flex flex-col gap-0.5 z-10">
                         {stats.away?.bonus_off && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BO</span>}
                         {stats.away?.bonus_def && <span className="text-[9px] font-black border-2 border-ffse-navy text-ffse-navy bg-white px-1 py-0 rounded font-mono leading-4">BD</span>}
                       </div>
