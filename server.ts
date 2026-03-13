@@ -512,7 +512,15 @@ async function refreshDivision(division: Division) {
     }
     for (const m of allMatches) {
       const { home_logo, away_logo, ...matchData } = m;
-      upsertMatch.run(matchData);
+      upsertMatch.run({
+        ...matchData,
+        tries_home: matchData.tries_home ?? 0,
+        tries_away: matchData.tries_away ?? 0,
+        yellow_home: matchData.yellow_home ?? 0,
+        yellow_away: matchData.yellow_away ?? 0,
+        red_home: matchData.red_home ?? 0,
+        red_away: matchData.red_away ?? 0,
+      });
     }
     if (allRankings.length > 0) {
       db.prepare("DELETE FROM rankings WHERE division = ?").run(division);
