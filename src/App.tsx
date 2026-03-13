@@ -26,6 +26,12 @@ interface Match {
   bonus_def_home?: number;
   bonus_off_away?: number;
   bonus_def_away?: number;
+  tries_home?: number;
+  tries_away?: number;
+  yellow_home?: number;
+  yellow_away?: number;
+  red_home?: number;
+  red_away?: number;
   matchday: number;
   date: string;
   time: string;
@@ -276,6 +282,45 @@ function DivisionPage() {
       .sort((a, b) => a.matchday - b.matchday);
     const pastMatches = clubMatches.filter(m => m.score_home !== null);
     const futureMatches = clubMatches.filter(m => m.score_home === null);
+    
+    const wins = pastMatches.filter(m => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return isHome ? m.score_home! > m.score_away! : m.score_away! > m.score_home!;
+    }).length;
+    const draws = pastMatches.filter(m => m.score_home === m.score_away).length;
+    const losses = pastMatches.length - wins - draws;
+    const pointsFor = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? m.score_home! : m.score_away!);
+    }, 0);
+    const pointsAgainst = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? m.score_away! : m.score_home!);
+    }, 0);
+    const bonusOff = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.bonus_off_home || 0) : (m.bonus_off_away || 0));
+    }, 0);
+    const bonusDef = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.bonus_def_home || 0) : (m.bonus_def_away || 0));
+    }, 0);
+    const triesFor = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.tries_home || 0) : (m.tries_away || 0));
+    }, 0);
+    const triesAgainst = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.tries_away || 0) : (m.tries_home || 0));
+    }, 0);
+    const yellowCards = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.yellow_home || 0) : (m.yellow_away || 0));
+    }, 0);
+    const redCards = pastMatches.reduce((acc, m) => {
+      const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
+      return acc + (isHome ? (m.red_home || 0) : (m.red_away || 0));
+    }, 0);
 
     return (
       <div className="min-h-screen font-sans pb-20 bg-neutral-50">
@@ -303,11 +348,60 @@ function DivisionPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 mt-10 space-y-12">
-          <section>
-            <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-              <Trophy className="text-ffse-red shrink-0" size={22} />
-              <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Résultats de la saison</h2>
-            </div>
+  {pastMatches.length > 0 && (
+    <section>
+      <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+        <Trophy className="text-ffse-red shrink-0" size={22} />
+        <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
+          <span className="font-display text-4xl text-ffse-navy">{wins}</span>
+          {draws > 0 && <span className="text-[10px] text-neutral-400">{draws} nul{draws > 1 ? "s" : ""}</span>}
+        </div>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Défaites</span>
+          <span className="font-display text-4xl text-neutral-400">{losses}</span>
+        </div>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points marqués</span>
+          <span className="font-display text-4xl text-ffse-navy">{pointsFor}</span>
+          <span className="text-[10px] text-neutral-400">{pointsAgainst} encaissés</span>
+        </div>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
+          <span className="font-display text-4xl text-ffse-navy">{triesFor}</span>
+          <span className="text-[10px] text-neutral-400">{triesAgainst} encaissés</span>
+        </div>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
+          <div className="flex items-center gap-2 mt-1">
+            {bonusOff > 0 && <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>}
+            {bonusDef > 0 && <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>}
+            {bonusOff === 0 && bonusDef === 0 && <span className="font-display text-4xl text-neutral-300">0</span>}
+          </div>
+        </div>
+        {yellowCards > 0 && (
+          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons jaunes</span>
+            <span className="font-display text-4xl text-yellow-400">{yellowCards}</span>
+          </div>
+        )}
+        {redCards > 0 && (
+          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons rouges</span>
+            <span className="font-display text-4xl text-red-500">{redCards}</span>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+  <section>
+    <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+      <Trophy className="text-ffse-red shrink-0" size={22} />
+      <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Résultats de la saison</h2>
+    </div>
             <div className="space-y-3">
               {pastMatches.length === 0 && <p className="text-neutral-400 italic text-sm">Aucun résultat pour l'instant.</p>}
               {pastMatches.map((m) => (
