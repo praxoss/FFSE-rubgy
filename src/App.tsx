@@ -371,22 +371,29 @@ function DivisionPage() {
     {/* Points / Essais / Bonus en face-à-face */}
     <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden mb-3">
       {/* Header */}
-      <div className="grid grid-cols-[1fr_auto_1fr] border-b border-neutral-100 px-4 py-2">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy text-right pr-4">Pour</span>
-        <span className="w-16" />
-        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 pl-4">Contre</span>
-      </div>
-      {/* Points */}
+     {/* Points */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
-        <span className="font-display text-3xl text-ffse-navy text-right pr-4">{pointsFor}</span>
+        <div className="text-right pr-4">
+          <span className="font-display text-3xl text-ffse-navy">{pointsFor}</span>
+          <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{pointsFor > 1 ? "marqués" : "marqué"}</div>
+        </div>
         <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points</span>
-        <span className="font-display text-3xl text-neutral-400 pl-4">{pointsAgainst}</span>
+        <div className="pl-4">
+          <span className="font-display text-3xl text-neutral-400">{pointsAgainst}</span>
+          <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{pointsAgainst > 1 ? "concédés" : "concédé"}</div>
+        </div>
       </div>
       {/* Essais */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
-        <span className="font-display text-3xl text-ffse-navy text-right pr-4">{triesFor}</span>
+        <div className="text-right pr-4">
+          <span className="font-display text-3xl text-ffse-navy">{triesFor}</span>
+          <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{triesFor > 1 ? "marqués" : "marqué"}</div>
+        </div>
         <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
-        <span className="font-display text-3xl text-neutral-400 pl-4">{triesAgainst}</span>
+        <div className="pl-4">
+          <span className="font-display text-3xl text-neutral-400">{triesAgainst}</span>
+          <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{triesAgainst > 1 ? "concédés" : "concédé"}</div>
+        </div>
       </div>
       {/* Bonus */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3">
