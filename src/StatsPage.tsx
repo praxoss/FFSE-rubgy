@@ -43,86 +43,110 @@ const METRICS: Metric[] = [
     label: "Essais marqués",
     unit: "essai",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.tries_home || 0) : (m.tries_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.tries_home || 0) : (m.tries_away || 0));
+        }, 0),
   },
   {
     key: "tries_against",
     label: "Essais concédés",
     unit: "essai",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.tries_away || 0) : (m.tries_home || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.tries_away || 0) : (m.tries_home || 0));
+        }, 0),
   },
   {
     key: "points_for",
     label: "Points marqués",
     unit: "point",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.score_home || 0) : (m.score_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.score_home || 0) : (m.score_away || 0));
+        }, 0),
   },
   {
     key: "points_against",
     label: "Points concédés",
     unit: "point",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.score_away || 0) : (m.score_home || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.score_away || 0) : (m.score_home || 0));
+        }, 0),
   },
   {
     key: "penalties",
     label: "Pénalités",
     unit: "pénalité",
-    compute: () => 0, // pas en DB, placeholder
+    compute: () => 0,
   },
   {
     key: "yellow",
     label: "Cartons jaunes",
     unit: "carton",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.yellow_home || 0) : (m.yellow_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.yellow_home || 0) : (m.yellow_away || 0));
+        }, 0),
   },
   {
     key: "red",
     label: "Cartons rouges",
     unit: "carton",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.red_home || 0) : (m.red_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.red_home || 0) : (m.red_away || 0));
+        }, 0),
   },
   {
     key: "bonus_off",
     label: "Bonus offensifs",
     unit: "bonus",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.bonus_off_home || 0) : (m.bonus_off_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.bonus_off_home || 0) : (m.bonus_off_away || 0));
+        }, 0),
   },
   {
     key: "bonus_def",
     label: "Bonus défensifs",
     unit: "bonus",
     compute: (team, matches) =>
-      matches.filter(m => m.score_home !== null).reduce((acc, m) => {
-        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
-        return acc + (isHome ? (m.bonus_def_home || 0) : (m.bonus_def_away || 0));
-      }, 0),
+      matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
+        .reduce((acc, m) => {
+          const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+          return acc + (isHome ? (m.bonus_def_home || 0) : (m.bonus_def_away || 0));
+        }, 0),
   },
 ];
 
