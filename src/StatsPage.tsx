@@ -97,8 +97,8 @@ const METRICS: Metric[] = [
     compute: () => 0,
   },
   {
-    key: "yellow",
-    label: "Cartons jaunes",
+    key: "cards",
+    label: "Cartons",
     unit: "carton",
     compute: (team, matches) =>
       matches
@@ -108,12 +108,7 @@ const METRICS: Metric[] = [
           const isHome = m.home_team.toLowerCase() === team.toLowerCase();
           return acc + (isHome ? (m.yellow_home || 0) : (m.yellow_away || 0));
         }, 0),
-  },
-  {
-    key: "red",
-    label: "Cartons rouges",
-    unit: "carton",
-    compute: (team, matches) =>
+    computeRed: (team: string, matches: Match[]) =>
       matches
         .filter(m => m.score_home !== null)
         .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase())
