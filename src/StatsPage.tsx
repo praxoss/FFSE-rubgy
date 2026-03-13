@@ -92,6 +92,44 @@ const METRICS: Metric[] = [
         }, 0),
   },
   {
+    key: "points_for_avg",
+    label: "Moy. points marqués",
+    unit: "point",
+    compute: (team, matches) => {
+      const teamMatches = matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase());
+      if (teamMatches.length === 0) return 0;
+      const total = teamMatches.reduce((acc, m) => {
+        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+        return acc + (isHome ? (m.score_home || 0) : (m.score_away || 0));
+      }, 0);
+      return Math.round((total / teamMatches.length) * 10) / 10;
+    },
+  },
+  {
+    key: "points_against_avg",
+    label: "Moy. points encaissés",
+    unit: "point",
+    compute: (team, matches) => {
+      const teamMatches = matches
+        .filter(m => m.score_home !== null)
+        .filter(m => m.home_team.toLowerCase() === team.toLowerCase() || m.away_team.toLowerCase() === team.toLowerCase());
+      if (teamMatches.length === 0) return 0;
+      const total = teamMatches.reduce((acc, m) => {
+        const isHome = m.home_team.toLowerCase() === team.toLowerCase();
+        return acc + (isHome ? (m.score_away || 0) : (m.score_home || 0));
+      }, 0);
+      return Math.round((total / teamMatches.length) * 10) / 10;
+    },
+  },
+  {
+    key: "penalties",
+    label: "Pénalités",
+    unit: "pénalité",
+    compute: () => 0,
+  },
+  {
     key: "penalties",
     label: "Pénalités",
     unit: "pénalité",
@@ -175,7 +213,7 @@ export default function StatsPage() {
       value: metric.compute(r.team, matches),
       redValue: metric.computeRed ? metric.computeRed(r.team, matches) : undefined,
     })).sort((a, b) => {
-      const asc = ["tries_against", "points_against", "cards", "penalties"].includes(selectedMetric);
+      const asc = ["tries_against", "points_against", "points_against_avg", "cards", "penalties"].includes(selectedMetric);
       if (!asc) return b.value - a.value;
       if (selectedMetric === "cards" && a.redValue !== undefined && b.redValue !== undefined) {
         if (a.redValue !== b.redValue) return a.redValue - b.redValue;
@@ -233,7 +271,7 @@ export default function StatsPage() {
           <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
             <h2 className="font-display text-xl uppercase tracking-tighter">{metric.label}</h2>
             <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
-              {["tries_against", "points_against", "cards", "penalties"].includes(selectedMetric) ? "ordre croissant" : "ordre décroissant"}
+              {["tries_against", "points_against", "points_against_avg", "cards", "penalties"].includes(selectedMetric) ? "ordre croissant" : "ordre décroissant"}
             </span>
           </div>
           <div className="divide-y divide-neutral-100">
