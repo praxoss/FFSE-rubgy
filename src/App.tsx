@@ -315,15 +315,29 @@ function DivisionPage() {
                   <div className="flex-1 text-right min-w-0"><span className="font-bold text-xs md:text-sm text-neutral-800">{m.home_team}</span></div>
                   <div className="flex items-center gap-2 shrink-0">
                     <ClubLogo src={m.home_logo} seed={m.home_team} size="sm" />
-                    <div className="bg-neutral-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 font-display text-lg md:text-xl min-w-[76px] justify-center shadow-lg">
-                      <button
-                        onClick={() => m.ffse_event_id && navigate(`/${division}/match/${m.ffse_event_id}`)}
-                        className={m.ffse_event_id ? "hover:opacity-70 transition-opacity flex items-center gap-1" : "flex items-center gap-1"}
-                      >
-                        <span className={m.score_home! > m.score_away! ? "text-white" : "text-neutral-400"}>{m.score_home}</span>
-                        <span className="text-neutral-500 text-sm">-</span>
-                        <span className={m.score_away! > m.score_home! ? "text-white" : "text-neutral-400"}>{m.score_away}</span>
-                      </button>
+                    <div className="relative">
+                      {(!!(m.bonus_off_home) || !!(m.bonus_def_home)) && (
+                        <div className="absolute -top-3 -left-2 flex flex-col gap-0.5 z-10">
+                          {!!m.bonus_off_home && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
+                          {!!m.bonus_def_home && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
+                        </div>
+                      )}
+                      {(!!(m.bonus_off_away) || !!(m.bonus_def_away)) && (
+                        <div className="absolute -top-3 -right-2 flex flex-col gap-0.5 z-10">
+                          {!!m.bonus_off_away && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
+                          {!!m.bonus_def_away && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
+                        </div>
+                      )}
+                      <div className="bg-neutral-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 font-display text-lg md:text-xl min-w-[76px] justify-center shadow-lg">
+                        <button
+                          onClick={() => m.ffse_event_id && navigate(`/${division}/match/${m.ffse_event_id}`)}
+                          className={m.ffse_event_id ? "hover:opacity-70 transition-opacity flex items-center gap-1" : "flex items-center gap-1"}
+                        >
+                          <span className={m.score_home! > m.score_away! ? "text-white" : "text-neutral-400"}>{m.score_home}</span>
+                          <span className="text-neutral-500 text-sm">-</span>
+                          <span className={m.score_away! > m.score_home! ? "text-white" : "text-neutral-400"}>{m.score_away}</span>
+                        </button>
+                      </div>
                     </div>
                     <ClubLogo src={m.away_logo} seed={m.away_team} size="sm" />
                   </div>
