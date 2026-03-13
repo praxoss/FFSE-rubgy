@@ -34,6 +34,7 @@ type Metric = {
   key: string;
   label: string;
   compute: (team: string, matches: Match[]) => number;
+  computeRed?: (team: string, matches: Match[]) => number;
   unit?: string;
 };
 
@@ -172,10 +173,15 @@ export default function StatsPage() {
       team: r.team,
       logo: r.logo,
       value: metric.compute(r.team, matches),
+      redValue: metric.computeRed ? metric.computeRed(r.team, matches) : undefined,
     })).sort((a, b) => {
-      // Pour les métriques "concédés" et cartons, ordre croissant
-      const asc = ["tries_against", "points_against", "yellow", "red", "penalties"].includes(selectedMetric);
-      return asc ? a.value - b.value : b.value - a.value;
+      const asc = ["tries_against", "points_against", "cards", "penalties"].includes(selectedMetric);
+      if (!asc) return b.value - a.value;
+      if (selectedMetric === "cards" && a.redValue !== undefined && b.redValue !== undefined) {
+        if (a.redValue !== b.redValue) return a.redValue - b.redValue;
+        return a.value - b.value;
+      }
+      return a.value - b.value;
     });
   }, [rankings, matches, selectedMetric, metric]);
 
@@ -239,7 +245,7 @@ export default function StatsPage() {
           <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
             <h2 className="font-display text-xl uppercase tracking-tighter">{metric.label}</h2>
             <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">
-              {["tries_against", "points_against", "yellow", "red"].includes(selectedMetric) ? "ordre croissant" : "ordre décroissant"}
+              {["tries_against", "points_against", "cards", "penalties"].includes(selectedMetric) ? "ordre croissant" : "ordre décroissant"}
             </span>
           </div>
           <div className="divide-y divide-neutral-100">
@@ -264,7 +270,21 @@ export default function StatsPage() {
                 >
                   {team.team}
                 </button>
-                <span className="font-display text-2xl text-ffse-navy shrink-0">{team.value}</span>
+                <span className="font-display text-2xl text-ffse-navy shrink-0 flex items-center gap-2">
+                  {selectedMetric === "cards" ? (
+                    <>
+                      <span className="flex items-center gap-0.5">
+                        <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={10} height={14} alt="rouge" style={{ height: "auto" }} />
+                        <span className={(team.redValue ?? 0) > 0 ? "text-red-500 text-lg" : "text-neutral-200 text-lg"}>{team.redValue ?? 0}</span>
+                      </span>
+                      <span className="text-neutral-200 text-sm">|</span>
+                      <span className="flex items-center gap-0.5">
+                        <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={10} height={14} alt="jaune" style={{ height: "auto" }} />
+                        <span className={team.value > 0 ? "text-yellow-500 text-lg" : "text-neutral-200 text-lg"}>{team.value}</span>
+                      </span>
+                    </>
+                  ) : team.value}
+                </span>
               </motion.div>
             ))}
           </div>
