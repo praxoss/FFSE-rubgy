@@ -129,6 +129,17 @@ try {
 } catch (e) {
   // colonnes déjà présentes, normal
 }
+try {
+  db.exec(`ALTER TABLE matches ADD COLUMN tries_home INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN tries_away INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN yellow_home INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN yellow_away INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN red_home INTEGER DEFAULT 0`);
+  db.exec(`ALTER TABLE matches ADD COLUMN red_away INTEGER DEFAULT 0`);
+  console.log("[migration] colonnes tries/cartons ajoutées");
+} catch (e) {
+  // colonnes déjà présentes, normal
+}
   
   console.log("Database initialized successfully");
 
@@ -279,6 +290,12 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
       const bonus_def_home = e.results?.[String(homeId)]?.bd ? 1 : 0;
       const bonus_off_away = e.results?.[String(awayId)]?.bp ? 1 : 0;
       const bonus_def_away = e.results?.[String(awayId)]?.bd ? 1 : 0;
+      const tries_home = Number(e.results?.[String(homeId)]?.tries) || 0;
+      const tries_away = Number(e.results?.[String(awayId)]?.tries) || 0;
+      const yellow_home = Number(e.results?.[String(homeId)]?.cj) || 0;
+      const yellow_away = Number(e.results?.[String(awayId)]?.cj) || 0;
+      const red_home = Number(e.results?.[String(homeId)]?.cr) || 0;
+      const red_away = Number(e.results?.[String(awayId)]?.cr) || 0;
 
       return {
         ffse_event_id: e.id,
@@ -294,6 +311,12 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         bonus_def_home,
         bonus_off_away,
         bonus_def_away,
+        tries_home,
+        tries_away,
+        yellow_home,
+        yellow_away,
+        red_home,
+        red_away,
       };
     })
     .sort((a, b) => a.matchday !== b.matchday ? a.matchday - b.matchday : a.date.localeCompare(b.date));
@@ -388,8 +411,8 @@ async function refreshDivision(division: Division) {
   });
 
   const upsertMatch = db.prepare(`
-    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, updated_at)
-    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, @bonus_off_home, @bonus_def_home, @bonus_off_away, @bonus_def_away, CURRENT_TIMESTAMP)
+    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, tries_home, tries_away, yellow_home, yellow_away, red_home, red_away, updated_at)
+    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, @bonus_off_home, @bonus_def_home, @bonus_off_away, @bonus_def_away, @tries_home, @tries_away, @yellow_home, @yellow_away, @red_home, @red_away, CURRENT_TIMESTAMP)
     ON CONFLICT(matchday, division, home_team, away_team) DO UPDATE SET
       ffse_event_id  = excluded.ffse_event_id,
       score_home     = COALESCE(excluded.score_home, matches.score_home),
@@ -398,6 +421,12 @@ async function refreshDivision(division: Division) {
       bonus_def_home = excluded.bonus_def_home,
       bonus_off_away = excluded.bonus_off_away,
       bonus_def_away = excluded.bonus_def_away,
+      tries_home     = excluded.tries_home,
+      tries_away     = excluded.tries_away,
+      yellow_home    = excluded.yellow_home,
+      yellow_away    = excluded.yellow_away,
+      red_home       = excluded.red_home,
+      red_away       = excluded.red_away,
       date           = excluded.date,
       time           = excluded.time,
       location       = excluded.location,
