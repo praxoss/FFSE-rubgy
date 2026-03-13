@@ -682,7 +682,7 @@ function DivisionPage() {
                         });
 
                       return (
-                        <motion.div
+                        <motion.tr
                             key={`${selectedMetric}-${team.team}`}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
