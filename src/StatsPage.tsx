@@ -203,19 +203,7 @@ export default function StatsPage() {
           <div className="text-[10px] uppercase tracking-widest text-blue-300/60 font-bold">
             {division.toUpperCase()} · Classements spécifiques
           </div>
-          <div className="w-20 flex justify-end">
-            <div className="flex items-center gap-2">
-              {(["d1", "d2", "d3", "d4"] as Division[]).map((d, i) => (
-                <span key={d} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-blue-300/30">|</span>}
-                  <button onClick={() => navigate(`/${d}/stats`)}
-                    className={`font-display text-sm uppercase tracking-wider transition-colors ${division === d ? "text-white" : "text-blue-300/50 hover:text-blue-200"}`}>
-                    {d.toUpperCase()}
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
+          <div className="w-16" />
         </div>
       </header>
 
