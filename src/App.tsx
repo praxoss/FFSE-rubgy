@@ -349,54 +349,100 @@ function DivisionPage() {
 
         <main className="max-w-4xl mx-auto px-4 mt-10 space-y-12">
   {pastMatches.length > 0 && (
-    <section>
-      <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-        <Trophy className="text-ffse-red shrink-0" size={22} />
-        <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
+  <section>
+    <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+      <Trophy className="text-ffse-red shrink-0" size={22} />
+      <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
+    </div>
+
+    {/* Victoires / Défaites */}
+    <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
+        <span className="font-display text-4xl text-ffse-navy">{wins}</span>
+        {draws > 0 && <span className="text-[10px] text-neutral-400">{draws} nul{draws > 1 ? "s" : ""}</span>}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
-          <span className="font-display text-4xl text-ffse-navy">{wins}</span>
-          {draws > 0 && <span className="text-[10px] text-neutral-400">{draws} nul{draws > 1 ? "s" : ""}</span>}
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Défaites</span>
+        <span className="font-display text-4xl text-neutral-400">{losses}</span>
+      </div>
+    </div>
+
+    {/* Points / Essais / Bonus en face-à-face */}
+    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden mb-3">
+      {/* Header */}
+      <div className="grid grid-cols-[1fr_auto_1fr] border-b border-neutral-100 px-4 py-2">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy text-right pr-4">Pour</span>
+        <span className="w-16" />
+        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 pl-4">Contre</span>
+      </div>
+      {/* Points */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
+        <span className="font-display text-3xl text-ffse-navy text-right pr-4">{pointsFor}</span>
+        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points</span>
+        <span className="font-display text-3xl text-neutral-400 pl-4">{pointsAgainst}</span>
+      </div>
+      {/* Essais */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
+        <span className="font-display text-3xl text-ffse-navy text-right pr-4">{triesFor}</span>
+        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
+        <span className="font-display text-3xl text-neutral-400 pl-4">{triesAgainst}</span>
+      </div>
+      {/* Bonus */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3">
+        <div className="flex justify-end pr-4 gap-1">
+          {bonusOff > 0 && <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>}
+          {bonusOff === 0 && <span className="font-display text-3xl text-neutral-200">0</span>}
         </div>
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Défaites</span>
-          <span className="font-display text-4xl text-neutral-400">{losses}</span>
+        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
+        <div className="flex justify-start pl-4 gap-1">
+          {bonusDef > 0 && <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>}
+          {bonusDef === 0 && <span className="font-display text-3xl text-neutral-200">0</span>}
         </div>
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points marqués</span>
-          <span className="font-display text-4xl text-ffse-navy">{pointsFor}</span>
-          <span className="text-[10px] text-neutral-400">{pointsAgainst} encaissés</span>
-        </div>
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
-          <span className="font-display text-4xl text-ffse-navy">{triesFor}</span>
-          <span className="text-[10px] text-neutral-400">{triesAgainst} encaissés</span>
-        </div>
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
-          <div className="flex items-center gap-2 mt-1">
-            {bonusOff > 0 && <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>}
-            {bonusDef > 0 && <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>}
-            {bonusOff === 0 && bonusDef === 0 && <span className="font-display text-4xl text-neutral-300">0</span>}
-          </div>
-        </div>
+      </div>
+    </div>
+
+    {/* Cartons */}
+    {(yellowCards > 0 || redCards > 0) && (
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center gap-4 mb-3">
         {yellowCards > 0 && (
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons jaunes</span>
-            <span className="font-display text-4xl text-yellow-400">{yellowCards}</span>
+          <div className="flex items-center gap-2">
+            <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
+            <span className="font-display text-2xl text-yellow-400">{yellowCards}</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Jaune{yellowCards > 1 ? "s" : ""}</span>
           </div>
         )}
+        {yellowCards > 0 && redCards > 0 && <div className="w-px h-8 bg-neutral-200" />}
         {redCards > 0 && (
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons rouges</span>
-            <span className="font-display text-4xl text-red-500">{redCards}</span>
+          <div className="flex items-center gap-2">
+            <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={14} height={20} alt="rouge" />
+            <span className="font-display text-2xl text-red-500">{redCards}</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Rouge{redCards > 1 ? "s" : ""}</span>
           </div>
         )}
       </div>
-    </section>
-  )}
+    )}
+
+    {/* Moyennes par match */}
+    <div className="grid grid-cols-2 gap-3">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
+        <span className="font-display text-4xl text-ffse-navy">
+          {pastMatches.length > 0 ? (triesFor / pastMatches.length).toFixed(1) : "–"}
+        </span>
+        <span className="text-[10px] text-neutral-400">marqués</span>
+      </div>
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
+        <span className="font-display text-4xl text-neutral-400">
+          {pastMatches.length > 0 ? (triesAgainst / pastMatches.length).toFixed(1) : "–"}
+        </span>
+        <span className="text-[10px] text-neutral-400">encaissés</span>
+      </div>
+    </div>
+
+  </section>
+)}
   <section>
     <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
       <Trophy className="text-ffse-red shrink-0" size={22} />
