@@ -265,7 +265,6 @@ export default function StatsPage() {
                         <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={10} height={14} alt="rouge" style={{ height: "auto" }} />
                         <span className={(team.redValue ?? 0) > 0 ? "text-red-500 text-lg" : "text-neutral-200 text-lg"}>{team.redValue ?? 0}</span>
                       </span>
-                      <span className="text-neutral-200 text-sm">|</span>
                       <span className="flex items-center gap-0.5">
                         <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={10} height={14} alt="jaune" style={{ height: "auto" }} />
                         <span className={team.value > 0 ? "text-yellow-500 text-lg" : "text-neutral-200 text-lg"}>{team.value}</span>
