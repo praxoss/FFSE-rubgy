@@ -682,12 +682,13 @@ function DivisionPage() {
                         });
 
                       return (
-                        <motion.tr key={team.id}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.03 }}
-                          className="hover:bg-neutral-50 transition-colors group"
-                        >
+                        <motion.div
+                            key={`${selectedMetric}-${team.team}`}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.03 }}
+                            className="flex items-center gap-4 px-4 py-3 hover:bg-neutral-50 transition-colors"
+                          >
                           <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
                           <td className="hidden md:table-cell px-1 py-3">
                             {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
