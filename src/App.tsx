@@ -363,6 +363,23 @@ function DivisionPage() {
     finally { setUpdating(false); }
   };
 
+  const handleClearManual = async () => {
+    if (!user) return;
+    if (!window.confirm("Supprimer tous les scores saisis manuellement ?")) return;
+    setUpdating(true);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch(`${window.location.origin}/admin/clear-manual`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${idToken}` }
+      });
+      const data = await res.json();
+      if (res.ok) { await fetchData(); alert(`${data.cleared} score(s) supprimé(s).`); }
+      else alert(`Erreur: ${data.error}`);
+    } catch (e) { console.error(e); }
+    finally { setUpdating(false); }
+  };
+
   const navigateMatchday = (dir: "prev" | "next") => {
     const next = dir === "prev" ? currentMatchday - 1 : currentMatchday + 1;
     if (next < 1 || next > maxMatchday) return;
@@ -451,6 +468,9 @@ function DivisionPage() {
               <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
               <button onClick={() => setShowManualModal(true)} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider flex items-center gap-1">
                 <PenLine size={11} /> Score
+              </button>
+              <button onClick={handleClearManual} className="text-[10px] text-red-400 hover:text-red-300 uppercase font-bold tracking-wider">
+                Clear
               </button>
             </div>
           )}
