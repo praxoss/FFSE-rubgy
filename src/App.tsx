@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
 import StatsPage from "./StatsPage";
-import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut } from "lucide-react";
-import { motion } from "motion/react";
+import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut, PenLine, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, isFirebaseConfigured } from "./firebase";
 
 interface Ranking {
@@ -43,6 +43,7 @@ interface Match {
   away_logo: string | null;
   score_home: number | null;
   score_away: number | null;
+  manual?: number;
 }
 
 interface MatchStats {
@@ -71,6 +72,191 @@ interface DivisionData {
 type Division = "d1" | "d2" | "d3" | "d4";
 type Tab = "ranking" | "results";
 
+// ── Modal Saisie Manuelle ─────────────────────────────────
+function ManualScoreModal({
+  allMatches,
+  user,
+  onClose,
+  onSuccess,
+}: {
+  allMatches: Match[];
+  user: User;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const futureMatches = allMatches.filter(m => m.score_home === null);
+  const allTeams = Array.from(new Set(allMatches.map(m => m.home_team))).sort();
+
+  const [team1, setTeam1] = useState("");
+  const [team2, setTeam2] = useState("");
+  const [score1, setScore1] = useState("");
+  const [score2, setScore2] = useState("");
+  const [yellow1, setYellow1] = useState("");
+  const [yellow2, setYellow2] = useState("");
+  const [red1, setRed1] = useState("");
+  const [red2, setRed2] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Trouver le match correspondant
+  const matchFound = useMemo(() => {
+    if (!team1 || !team2 || team1 === team2) return null;
+    return futureMatches.find(m =>
+      (m.home_team === team1 && m.away_team === team2) ||
+      (m.home_team === team2 && m.away_team === team1)
+    ) || null;
+  }, [team1, team2, futureMatches]);
+
+  const handleSubmit = async () => {
+    if (!matchFound) { setError("Aucun match à venir trouvé entre ces deux équipes."); return; }
+    if (score1 === "" || score2 === "") { setError("Les scores sont obligatoires."); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch(`${window.location.origin}/admin/manual-score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+        body: JSON.stringify({
+          team1, team2,
+          score1: Number(score1), score2: Number(score2),
+          yellow1: Number(yellow1) || 0, yellow2: Number(yellow2) || 0,
+          red1: Number(red1) || 0, red2: Number(red2) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Erreur serveur"); return; }
+      setSuccess(`Score enregistré : ${data.home_team} ${data.score}`);
+      setTimeout(() => { onSuccess(); onClose(); }, 1500);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inputClass = "w-full bg-neutral-100 border border-neutral-200 rounded-lg px-3 py-2 text-sm font-bold text-neutral-800 focus:outline-none focus:border-ffse-navy focus:bg-white transition-colors";
+  const smallInputClass = "w-full bg-neutral-100 border border-neutral-200 rounded-lg px-2 py-2 text-sm font-bold text-neutral-800 text-center focus:outline-none focus:border-ffse-navy focus:bg-white transition-colors";
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative bg-white rounded-3xl shadow-2xl border border-neutral-200 w-full max-w-md overflow-hidden"
+      >
+        {/* Header */}
+        <div className="bg-ffse-navy text-white px-6 py-4 flex items-center justify-between border-b-4 border-ffse-red">
+          <h2 className="font-display text-xl uppercase tracking-tighter">Saisie manuelle</h2>
+          <button onClick={onClose} className="text-blue-300 hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Équipe 1 */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Équipe 1</label>
+            <select value={team1} onChange={e => setTeam1(e.target.value)} className={inputClass}>
+              <option value="">Choisir une équipe…</option>
+              {allTeams.filter(t => t !== team2).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Équipe 2 */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Équipe 2</label>
+            <select value={team2} onChange={e => setTeam2(e.target.value)} className={inputClass}>
+              <option value="">Choisir une équipe…</option>
+              {allTeams.filter(t => t !== team1).map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Indicateur match trouvé */}
+          {team1 && team2 && (
+            <div className={`text-xs font-bold px-3 py-2 rounded-lg ${matchFound ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-red-50 text-red-500 border border-red-200"}`}>
+              {matchFound
+                ? `✓ Match trouvé — J${matchFound.matchday} · ${matchFound.date}`
+                : "✗ Aucun match à venir entre ces deux équipes"}
+            </div>
+          )}
+
+          {/* Scores */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Scores</label>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <div className="space-y-1">
+                <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 text-center truncate">{team1 || "Équipe 1"}</div>
+                <input type="number" min="0" value={score1} onChange={e => setScore1(e.target.value)} placeholder="0" className={smallInputClass} />
+              </div>
+              <span className="font-display text-xl text-neutral-300">–</span>
+              <div className="space-y-1">
+                <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 text-center truncate">{team2 || "Équipe 2"}</div>
+                <input type="number" min="0" value={score2} onChange={e => setScore2(e.target.value)} placeholder="0" className={smallInputClass} />
+              </div>
+            </div>
+          </div>
+
+          {/* Cartons */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons</label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Eq1 */}
+              <div className="space-y-2">
+                <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 truncate">{team1 || "Équipe 1"}</div>
+                <div className="flex items-center gap-2">
+                  <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={10} height={14} alt="jaune" style={{ height: "auto" }} />
+                  <input type="number" min="0" value={yellow1} onChange={e => setYellow1(e.target.value)} placeholder="0" className={smallInputClass} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={10} height={14} alt="rouge" style={{ height: "auto" }} />
+                  <input type="number" min="0" value={red1} onChange={e => setRed1(e.target.value)} placeholder="0" className={smallInputClass} />
+                </div>
+              </div>
+              {/* Eq2 */}
+              <div className="space-y-2">
+                <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 truncate">{team2 || "Équipe 2"}</div>
+                <div className="flex items-center gap-2">
+                  <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={10} height={14} alt="jaune" style={{ height: "auto" }} />
+                  <input type="number" min="0" value={yellow2} onChange={e => setYellow2(e.target.value)} placeholder="0" className={smallInputClass} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={10} height={14} alt="rouge" style={{ height: "auto" }} />
+                  <input type="number" min="0" value={red2} onChange={e => setRed2(e.target.value)} placeholder="0" className={smallInputClass} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Erreur / Succès */}
+          {error && <div className="text-xs text-red-500 font-bold bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</div>}
+          {success && <div className="text-xs text-emerald-600 font-bold bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">{success}</div>}
+
+          {/* Bouton */}
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !matchFound || score1 === "" || score2 === ""}
+            className="w-full bg-ffse-navy text-white py-3 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-ffse-navy/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {submitting ? <RefreshCw size={14} className="animate-spin" /> : <PenLine size={14} />}
+            Enregistrer
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function DivisionPage() {
   const { div, day, club } = useParams<{ div: string; day?: string; club?: string }>();
   const location = useLocation();
@@ -88,8 +274,17 @@ function DivisionPage() {
   const [updating, setUpdating] = useState(false);
   const [debugResult, setDebugResult] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [showManualModal, setShowManualModal] = useState(false);
 
   const { rankings, matches } = data[division];
+
+  // Tous les matchs de toutes les divisions pour la modal
+  const allMatchesAllDivisions = useMemo(() => [
+    ...data.d1.matches,
+    ...data.d2.matches,
+    ...data.d3.matches,
+    ...data.d4.matches,
+  ], [data]);
 
   const computeMatchday = (matches: Match[]) => {
     if (matches.length === 0) return 1;
@@ -254,6 +449,9 @@ function DivisionPage() {
             <div className="flex gap-3">
               <button onClick={handleDebugFetch} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">Debug</button>
               <button onClick={handleUpdate} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider">MAJ</button>
+              <button onClick={() => setShowManualModal(true)} className="text-[10px] text-blue-300 hover:text-white uppercase font-bold tracking-wider flex items-center gap-1">
+                <PenLine size={11} /> Score
+              </button>
             </div>
           )}
         </div>
@@ -283,7 +481,7 @@ function DivisionPage() {
       .sort((a, b) => a.matchday - b.matchday);
     const pastMatches = clubMatches.filter(m => m.score_home !== null);
     const futureMatches = clubMatches.filter(m => m.score_home === null);
-    
+
     const wins = pastMatches.filter(m => {
       const isHome = m.home_team.toLowerCase() === selectedClub.toLowerCase();
       return isHome ? m.score_home! > m.score_away! : m.score_away! > m.score_home!;
@@ -349,115 +547,108 @@ function DivisionPage() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 mt-10 space-y-12">
-  {pastMatches.length > 0 && (
-  <section>
-    <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-      <Trophy className="text-ffse-red shrink-0" size={22} />
-      <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
-    </div>
+          {pastMatches.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+                <Trophy className="text-ffse-red shrink-0" size={22} />
+                <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
+              </div>
 
-    {/* Victoires / Défaites */}
-    <div className="grid grid-cols-2 gap-3 mb-3">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
-        <span className="font-display text-4xl text-ffse-navy">{wins}</span>
-        {draws > 0 && <span className="text-[10px] text-neutral-400">{draws} nul{draws > 1 ? "s" : ""}</span>}
-      </div>
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Défaites</span>
-        <span className="font-display text-4xl text-neutral-400">{losses}</span>
-      </div>
-    </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
+                  <span className="font-display text-4xl text-ffse-navy">{wins}</span>
+                  {draws > 0 && <span className="text-[10px] text-neutral-400">{draws} nul{draws > 1 ? "s" : ""}</span>}
+                </div>
+                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Défaites</span>
+                  <span className="font-display text-4xl text-neutral-400">{losses}</span>
+                </div>
+              </div>
 
-    {/* Points / Essais / Bonus en face-à-face */}
-    <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden mb-3">
-      {/* Header */}
-     {/* Points */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
-        <div className="text-right pr-4">
-          <span className="font-display text-3xl text-ffse-navy">{pointsFor}</span>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{pointsFor > 1 ? "marqués" : "marqué"}</div>
-        </div>
-        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points</span>
-        <div className="pl-4">
-          <span className="font-display text-3xl text-neutral-400">{pointsAgainst}</span>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{pointsAgainst > 1 ? "concédés" : "concédé"}</div>
-        </div>
-      </div>
-      {/* Essais */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
-        <div className="text-right pr-4">
-          <span className="font-display text-3xl text-ffse-navy">{triesFor}</span>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{triesFor > 1 ? "marqués" : "marqué"}</div>
-        </div>
-        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
-        <div className="pl-4">
-          <span className="font-display text-3xl text-neutral-400">{triesAgainst}</span>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{triesAgainst > 1 ? "concédés" : "concédé"}</div>
-        </div>
-      </div>
-      {/* Bonus */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3">
-        <div className="flex justify-end pr-4 gap-1">
-          <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>
-        </div>
-        <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
-        <div className="flex justify-start pl-4 gap-1">
-          <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>
-        </div>
-      </div>
-    </div>
+              <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden mb-3">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
+                  <div className="text-right pr-4">
+                    <span className="font-display text-3xl text-ffse-navy">{pointsFor}</span>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{pointsFor > 1 ? "marqués" : "marqué"}</div>
+                  </div>
+                  <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Points</span>
+                  <div className="pl-4">
+                    <span className="font-display text-3xl text-neutral-400">{pointsAgainst}</span>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{pointsAgainst > 1 ? "concédés" : "concédé"}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
+                  <div className="text-right pr-4">
+                    <span className="font-display text-3xl text-ffse-navy">{triesFor}</span>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-ffse-navy/50">{triesFor > 1 ? "marqués" : "marqué"}</div>
+                  </div>
+                  <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais</span>
+                  <div className="pl-4">
+                    <span className="font-display text-3xl text-neutral-400">{triesAgainst}</span>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-neutral-300">{triesAgainst > 1 ? "concédés" : "concédé"}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3">
+                  <div className="flex justify-end pr-4 gap-1">
+                    <span className="text-[11px] font-black text-white bg-[#DAB455] px-1.5 py-0.5 rounded font-mono">{bonusOff} BO</span>
+                  </div>
+                  <span className="w-16 text-center text-[10px] uppercase tracking-widest font-bold text-neutral-400">Bonus</span>
+                  <div className="flex justify-start pl-4 gap-1">
+                    <span className="text-[11px] font-black border border-neutral-400 text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">{bonusDef} BD</span>
+                  </div>
+                </div>
+              </div>
 
-    {/* Cartons */}
-    {(yellowCards > 0 || redCards > 0) && (
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center justify-center gap-4 mb-3">
-        {yellowCards > 0 && (
-          <div className="flex items-center gap-2">
-            <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
-            <span className="font-display text-2xl text-yellow-400">{yellowCards}</span>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Jaune{yellowCards > 1 ? "s" : ""}</span>
-          </div>
-        )}
-        {yellowCards > 0 && redCards > 0 && <div className="w-px h-8 bg-neutral-200" />}
-        {redCards > 0 && (
-          <div className="flex items-center gap-2">
-            <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={14} height={20} alt="rouge" />
-            <span className="font-display text-2xl text-red-500">{redCards}</span>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Rouge{redCards > 1 ? "s" : ""}</span>
-          </div>
-        )}
-      </div>
-    )}
+              {(yellowCards > 0 || redCards > 0) && (
+                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center justify-center gap-4 mb-3">
+                  {yellowCards > 0 && (
+                    <div className="flex items-center gap-2">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
+                      <span className="font-display text-2xl text-yellow-400">{yellowCards}</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Jaune{yellowCards > 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                  {yellowCards > 0 && redCards > 0 && <div className="w-px h-8 bg-neutral-200" />}
+                  {redCards > 0 && (
+                    <div className="flex items-center gap-2">
+                      <img src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={14} height={20} alt="rouge" />
+                      <span className="font-display text-2xl text-red-500">{redCards}</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Rouge{redCards > 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
-    {/* Moyennes par match */}
-    <div className="grid grid-cols-2 gap-3">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
-        <span className="font-display text-4xl text-ffse-navy">
-          {pastMatches.length > 0 ? (triesFor / pastMatches.length).toFixed(1) : "–"}
-        </span>
-        <span className="text-[10px] text-neutral-400">marqués</span>
-      </div>
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
-        <span className="font-display text-4xl text-neutral-400">
-          {pastMatches.length > 0 ? (triesAgainst / pastMatches.length).toFixed(1) : "–"}
-        </span>
-        <span className="text-[10px] text-neutral-400">encaissés</span>
-      </div>
-    </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
+                  <span className="font-display text-4xl text-ffse-navy">
+                    {pastMatches.length > 0 ? (triesFor / pastMatches.length).toFixed(1) : "–"}
+                  </span>
+                  <span className="text-[10px] text-neutral-400">marqués</span>
+                </div>
+                <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
+                  <span className="font-display text-4xl text-neutral-400">
+                    {pastMatches.length > 0 ? (triesAgainst / pastMatches.length).toFixed(1) : "–"}
+                  </span>
+                  <span className="text-[10px] text-neutral-400">encaissés</span>
+                </div>
+              </div>
+            </section>
+          )}
 
-  </section>
-)}
-  <section>
-    <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-      <Trophy className="text-ffse-red shrink-0" size={22} />
-      <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Résultats de la saison</h2>
-    </div>
+          <section>
+            <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+              <Trophy className="text-ffse-red shrink-0" size={22} />
+              <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Résultats de la saison</h2>
+            </div>
             <div className="space-y-3">
               {pastMatches.length === 0 && <p className="text-neutral-400 italic text-sm">Aucun résultat pour l'instant.</p>}
               {pastMatches.map((m) => (
-                <div key={m.id} className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-2 md:gap-4">
+                <div key={m.id} className={`bg-white p-3 md:p-5 rounded-2xl shadow-sm border flex items-center gap-2 md:gap-4 ${m.manual ? "border-amber-300" : "border-neutral-200"}`}>
+                  {m.manual ? <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-2xl" /> : null}
                   <div className="flex-1 text-right min-w-0"><span className="font-bold text-xs md:text-sm text-neutral-800">{m.home_team}</span></div>
                   <div className="flex items-center gap-2 shrink-0">
                     <ClubLogo src={m.home_logo} seed={m.home_team} size="sm" />
@@ -474,24 +665,28 @@ function DivisionPage() {
                           {!!m.bonus_def_away && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
                         </div>
                       )}
-                      <div className="bg-neutral-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 font-display text-lg md:text-xl min-w-[76px] justify-center shadow-lg">
+                      <div className={`${m.manual ? "bg-amber-500" : "bg-neutral-900"} text-white px-3 py-1.5 rounded-lg flex items-center gap-2 font-display text-lg md:text-xl min-w-[76px] justify-center shadow-lg`}>
                         <button
-                          onClick={() => m.ffse_event_id && navigate(`/${division}/match/${m.ffse_event_id}`)}
-                          className={m.ffse_event_id ? "hover:opacity-70 transition-opacity flex items-center gap-1" : "flex items-center gap-1"}
+                          onClick={() => m.ffse_event_id && !m.manual && navigate(`/${division}/match/${m.ffse_event_id}`)}
+                          className={m.ffse_event_id && !m.manual ? "hover:opacity-70 transition-opacity flex items-center gap-1" : "flex items-center gap-1"}
                         >
-                          <span className={m.score_home! > m.score_away! ? "text-white" : "text-neutral-400"}>{m.score_home}</span>
-                          <span className="text-neutral-500 text-sm">-</span>
-                          <span className={m.score_away! > m.score_home! ? "text-white" : "text-neutral-400"}>{m.score_away}</span>
+                          <span className={m.score_home! > m.score_away! ? "text-white" : "text-white/50"}>{m.score_home}</span>
+                          <span className="text-white/30 text-sm">-</span>
+                          <span className={m.score_away! > m.score_home! ? "text-white" : "text-white/50"}>{m.score_away}</span>
                         </button>
                       </div>
                     </div>
                     <ClubLogo src={m.away_logo} seed={m.away_team} size="sm" />
                   </div>
-                  <div className="flex-1 text-left min-w-0"><span className="font-bold text-xs md:text-sm text-neutral-800">{m.away_team}</span></div>
+                  <div className="flex-1 text-left min-w-0">
+                    <span className="font-bold text-xs md:text-sm text-neutral-800">{m.away_team}</span>
+                    {m.manual ? <span className="block text-[9px] text-amber-500 font-bold uppercase tracking-wider">Provisoire</span> : null}
+                  </div>
                 </div>
               ))}
             </div>
           </section>
+
           <section>
             <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
               <Calendar className="text-ffse-red shrink-0" size={22} />
@@ -528,6 +723,18 @@ function DivisionPage() {
   return (
     <div className="min-h-screen font-sans pb-20 bg-neutral-50">
       <Header />
+
+      {/* Modal saisie manuelle */}
+      <AnimatePresence>
+        {showManualModal && user && (
+          <ManualScoreModal
+            allMatches={allMatchesAllDivisions}
+            user={user}
+            onClose={() => setShowManualModal(false)}
+            onSuccess={fetchData}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="max-w-5xl mx-auto mt-6 px-4">
         <div className="bg-white p-1 rounded-xl flex gap-1 border border-neutral-200 shadow-sm">
@@ -601,13 +808,15 @@ function DivisionPage() {
                                 {!!match.bonus_def_away && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
                               </div>
                             )}
-                            <div className="bg-neutral-700 text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg">
+                            <div className={`${match.manual ? "bg-amber-500" : "bg-neutral-700"} text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg`}>
                               {match.score_home !== null && match.score_away !== null ? (
-                                <button onClick={() => match.ffse_event_id && navigate(`/${division}/match/${match.ffse_event_id}`)}
-                                  className={`flex items-center gap-2 ${match.ffse_event_id ? "hover:opacity-70 transition-opacity" : ""}`}>
-                                  <span className={match.score_home > match.score_away ? "text-white" : "text-neutral-400"}>{match.score_home}</span>
-                                  <span className="text-neutral-500 text-xs">–</span>
-                                  <span className={match.score_away > match.score_home ? "text-white" : "text-neutral-400"}>{match.score_away}</span>
+                                <button
+                                  onClick={() => match.ffse_event_id && !match.manual && navigate(`/${division}/match/${match.ffse_event_id}`)}
+                                  className={`flex items-center gap-2 ${match.ffse_event_id && !match.manual ? "hover:opacity-70 transition-opacity" : ""}`}
+                                >
+                                  <span className={match.score_home > match.score_away ? "text-white" : "text-white/50"}>{match.score_home}</span>
+                                  <span className="text-white/30 text-xs">–</span>
+                                  <span className={match.score_away > match.score_home ? "text-white" : "text-white/50"}>{match.score_away}</span>
                                 </button>
                               ) : (
                                 <span className="text-[9px] font-sans font-bold uppercase tracking-tight text-neutral-300 text-center leading-tight">
@@ -622,6 +831,7 @@ function DivisionPage() {
                           <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.away_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
                             {match.away_team}
                           </button>
+                          {match.manual ? <span className="block text-[9px] text-amber-500 font-bold uppercase tracking-wider">Provisoire</span> : null}
                         </div>
                       </div>
                     ))}
@@ -683,12 +893,12 @@ function DivisionPage() {
 
                       return (
                         <motion.tr
-                            key={team.id}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.03 }}
-                            className="hover:bg-neutral-50 transition-colors"
-                          >
+                          key={team.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.03 }}
+                          className="hover:bg-neutral-50 transition-colors"
+                        >
                           <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
                           <td className="hidden md:table-cell px-1 py-3">
                             {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
@@ -797,17 +1007,6 @@ function MatchPage() {
     return <img src={icons[type]} alt={type} width={size} height={size} className="inline-block" style={{ width: size, height: "auto" }} />;
   };
 
-  const Cards = ({ y, r }: { y: number; r: number }) => (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: y }).map((_, i) => (
-        <img key={`y${i}`} src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={14} height={20} alt="jaune" />
-      ))}
-      {Array.from({ length: r }).map((_, i) => (
-        <img key={`r${i}`} src="https://www.lequipe.fr/img/icons/ico_carton_rouge.svg" width={14} height={20} alt="rouge" />
-      ))}
-    </div>
-  );
-
   const StatRow = ({ label, icon, home, away }: {
     label: string;
     icon: "essai" | "transfo" | "penalite" | null;
@@ -819,25 +1018,16 @@ function MatchPage() {
     const a = Number(away) || 0;
     const centerLabel = label === "drops" ? "DR" : label.slice(0, 2).toUpperCase();
     return (
-      <div
-        className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3 last:border-0"
-        style={{ borderBottom: "0.3px solid #e5e5e5" }}
-      >
+      <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3 last:border-0" style={{ borderBottom: "0.3px solid #e5e5e5" }}>
         <div className="flex items-center justify-end gap-1">
           <span className={`font-bold text-base ${h > a ? "text-ffse-navy" : "text-neutral-400"}`}>{home ?? "–"}</span>
           <span className="text-xs font-normal text-neutral-400">{label}</span>
         </div>
         <div className="flex justify-start pl-3">
-          {icon
-            ? <RugbyIcon type={icon} size={12} />
-            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
-          }
+          {icon ? <RugbyIcon type={icon} size={12} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>}
         </div>
         <div className="flex justify-end pr-3">
-          {icon
-            ? <RugbyIcon type={icon} size={12} />
-            : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>
-          }
+          {icon ? <RugbyIcon type={icon} size={12} /> : <span className="text-neutral-300 text-xs font-bold uppercase tracking-wider">{centerLabel}</span>}
         </div>
         <div className="flex items-center justify-start gap-1">
           <span className={`font-bold text-base ${a > h ? "text-ffse-navy" : "text-neutral-400"}`}>{away ?? "–"}</span>
@@ -849,7 +1039,6 @@ function MatchPage() {
 
   return (
     <div className="min-h-screen font-sans pb-20 bg-neutral-50">
-      {/* Header */}
       <header className="bg-ffse-navy text-white px-4 pt-4 pb-3 border-b-4 border-ffse-red sticky top-0 z-50">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button onClick={() => navigate(`/${division}/results`)} className="flex items-center gap-1 text-blue-300 hover:text-white font-bold uppercase tracking-wider transition-colors text-xs">
@@ -863,12 +1052,9 @@ function MatchPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
-
-        {/* Score card */}
         <div className="bg-white rounded-3xl shadow-xl border border-neutral-200 overflow-hidden">
           <div className="p-8">
             <div className="flex items-center gap-4">
-              {/* Home */}
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="relative overflow-visible">
                   {match.score_home! > match.score_away! && (
@@ -880,8 +1066,7 @@ function MatchPage() {
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
               </div>
-        
-              {/* Score */}
+
               <div className="flex flex-col items-center gap-2 shrink-0">
                 {played ? (
                   <div className="relative">
@@ -910,8 +1095,7 @@ function MatchPage() {
                   </div>
                 )}
               </div>
-        
-              {/* Away */}
+
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="relative overflow-visible">
                   {match.score_away! > match.score_home! && (
@@ -927,7 +1111,6 @@ function MatchPage() {
           </div>
         </div>
 
-        {/* Date + Venue */}
         <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 overflow-hidden">
           <div className="px-6 py-4 flex flex-col items-center gap-1">
             <p className="font-bold text-sm text-neutral-800">
@@ -943,7 +1126,6 @@ function MatchPage() {
           )}
         </div>
 
-        {/* Stats */}
         {played && stats.home && stats.away && (
           <div className="bg-white rounded-3xl shadow-xl border border-neutral-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-neutral-100 flex items-center gap-3">
@@ -951,7 +1133,6 @@ function MatchPage() {
               <h2 className="font-display text-xl uppercase tracking-tighter">Statistiques</h2>
             </div>
             <div className="px-6 py-4">
-              {/* Header noms clubs */}
               <div className="grid grid-cols-[1fr_80px_80px_1fr] pb-3 mb-2 border-b-4 border-ffse-navy">
                 <div className="text-right text-xs font-bold uppercase tracking-wider text-neutral-500">{match.home_team}</div>
                 <div /><div />
@@ -961,8 +1142,6 @@ function MatchPage() {
               <StatRow label="transf." icon="transfo" home={stats.home.conversions} away={stats.away.conversions} />
               <StatRow label="pénalités" icon="penalite" home={stats.home.penalties} away={stats.away.penalties} />
               <StatRow label="drops" icon={null} home={stats.home.drops} away={stats.away.drops} />
-              
-              {/* Cartons jaunes */}
               {(() => {
                 const hy = Number(stats.home.yellow) || 0;
                 const ay = Number(stats.away.yellow) || 0;
@@ -970,7 +1149,7 @@ function MatchPage() {
                 return (
                   <div className="grid grid-cols-[1fr_80px_80px_1fr] items-center py-3" style={{ borderBottom: "0.3px solid #e5e5e5" }}>
                     <div className="flex items-center justify-end gap-1">
-                      {hy > 0 && <><span className="font-bold text-base text-neutral-400">{hy}</span></>}
+                      {hy > 0 && <span className="font-bold text-base text-neutral-400">{hy}</span>}
                     </div>
                     <div className="flex justify-start pl-3">
                       {hy > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />}
@@ -979,12 +1158,11 @@ function MatchPage() {
                       {ay > 0 && <img src="https://www.lequipe.fr/img/icons/ico_carton_jaune.svg" width={12} height={12} style={{ width: 12, height: "auto" }} alt="jaune" />}
                     </div>
                     <div className="flex items-center justify-start gap-1">
-                      {ay > 0 && <><span className="font-bold text-base text-neutral-400">{ay}</span></>}
+                      {ay > 0 && <span className="font-bold text-base text-neutral-400">{ay}</span>}
                     </div>
                   </div>
                 );
               })()}
-              {/* Cartons rouges */}
               {(() => {
                 const hr = Number(stats.home.red) || 0;
                 const ar = Number(stats.away.red) || 0;
@@ -1009,7 +1187,6 @@ function MatchPage() {
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
