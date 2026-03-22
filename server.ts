@@ -57,22 +57,22 @@ try {
     );
   `);
 
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS matches (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ffse_event_id INTEGER,
-        matchday INTEGER,
-        division TEXT NOT NULL DEFAULT 'd3',
-        date TEXT,
-        time TEXT,
-        location TEXT,
-        home_team TEXT,
-        away_team TEXT,
-        score_home INTEGER,
-        score_away INTEGER,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS matches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ffse_event_id INTEGER,
+      matchday INTEGER,
+      division TEXT NOT NULL DEFAULT 'd3',
+      date TEXT,
+      time TEXT,
+      location TEXT,
+      home_team TEXT,
+      away_team TEXT,
+      score_home INTEGER,
+      score_away INTEGER,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
   try {
     db.exec(`DROP INDEX IF EXISTS idx_matches_unique`);
@@ -82,23 +82,22 @@ try {
     console.warn("Index creation warning:", e);
   }
 
-
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS rankings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        team TEXT,
-        division TEXT NOT NULL DEFAULT 'd3',
-        played INTEGER,
-        won INTEGER,
-        drawn INTEGER,
-        lost INTEGER,
-        bonus INTEGER DEFAULT 0,
-        diff INTEGER DEFAULT 0,
-        points INTEGER,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(team, division)
-      );
-    `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rankings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team TEXT,
+      division TEXT NOT NULL DEFAULT 'd3',
+      played INTEGER,
+      won INTEGER,
+      drawn INTEGER,
+      lost INTEGER,
+      bonus INTEGER DEFAULT 0,
+      diff INTEGER DEFAULT 0,
+      points INTEGER,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(team, division)
+    );
+  `);
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS metadata (
@@ -107,7 +106,6 @@ try {
     );
   `);
 
-  // ── Rankings history ──
   db.exec(`
     CREATE TABLE IF NOT EXISTS rankings_history (
       team TEXT,
@@ -119,28 +117,38 @@ try {
     );
   `);
 
-  // Migration — ajout colonnes bonus
-try {
-  db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_home INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_home INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_away INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_away INTEGER DEFAULT 0`);
-  console.log("[migration] colonnes bonus ajoutées");
-} catch (e) {
-  // colonnes déjà présentes, normal
-}
-try {
-  db.exec(`ALTER TABLE matches ADD COLUMN tries_home INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN tries_away INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN yellow_home INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN yellow_away INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN red_home INTEGER DEFAULT 0`);
-  db.exec(`ALTER TABLE matches ADD COLUMN red_away INTEGER DEFAULT 0`);
-  console.log("[migration] colonnes tries/cartons ajoutées");
-} catch (e) {
-  // colonnes déjà présentes, normal
-}
-  
+  // Migration — colonnes bonus
+  try {
+    db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_home INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_home INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_away INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN bonus_def_away INTEGER DEFAULT 0`);
+    console.log("[migration] colonnes bonus ajoutées");
+  } catch (e) {
+    // colonnes déjà présentes, normal
+  }
+
+  // Migration — colonnes tries/cartons
+  try {
+    db.exec(`ALTER TABLE matches ADD COLUMN tries_home INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN tries_away INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN yellow_home INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN yellow_away INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN red_home INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE matches ADD COLUMN red_away INTEGER DEFAULT 0`);
+    console.log("[migration] colonnes tries/cartons ajoutées");
+  } catch (e) {
+    // colonnes déjà présentes, normal
+  }
+
+  // Migration — colonne manual
+  try {
+    db.exec(`ALTER TABLE matches ADD COLUMN manual INTEGER DEFAULT 0`);
+    console.log("[migration] colonne manual ajoutée");
+  } catch (e) {
+    // déjà présente
+  }
+
   console.log("Database initialized successfully");
 
 } catch (err) {
@@ -286,10 +294,6 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         ? venueClass.replace("sp_venue-", "").split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
         : "Terrain FFSE";
 
-      const bonus_off_home = e.results?.[String(homeId)]?.bp ? 1 : 0;
-      const bonus_def_home = e.results?.[String(homeId)]?.bd ? 1 : 0;
-      const bonus_off_away = e.results?.[String(awayId)]?.bp ? 1 : 0;
-      const bonus_def_away = e.results?.[String(awayId)]?.bd ? 1 : 0;
       const tries_home = Number(e.results?.[String(homeId)]?.tries) || 0;
       const tries_away = Number(e.results?.[String(awayId)]?.tries) || 0;
       const yellow_home = Number(e.results?.[String(homeId)]?.cj) || 0;
@@ -307,10 +311,6 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
         away_team_id: awayId,
         score_home,
         score_away,
-        bonus_off_home,
-        bonus_def_home,
-        bonus_off_away,
-        bonus_def_away,
         tries_home,
         tries_away,
         yellow_home,
@@ -392,47 +392,44 @@ async function refreshDivision(division: Division) {
     const away = teamMap.get(m.away_team_id);
     return {
       ffse_event_id: m.ffse_event_id,
-      matchday:   m.matchday,
+      matchday:    m.matchday,
       division,
-      date:       m.date,
-      time:       m.time,
-      location:   m.location || "Terrain FFSE",
-      home_team:  rankingNameMap.get(m.home_team_id) ?? home?.name ?? `Team#${m.home_team_id}`,
-      away_team:  rankingNameMap.get(m.away_team_id) ?? away?.name ?? `Team#${m.away_team_id}`,
-      home_logo:  home?.logo ?? null,
-      away_logo:  away?.logo ?? null,
-      score_home: m.score_home,
-      score_away: m.score_away,
-      tries_home: m.tries_home,
-      tries_away: m.tries_away,
+      date:        m.date,
+      time:        m.time,
+      location:    m.location || "Terrain FFSE",
+      home_team:   rankingNameMap.get(m.home_team_id) ?? home?.name ?? `Team#${m.home_team_id}`,
+      away_team:   rankingNameMap.get(m.away_team_id) ?? away?.name ?? `Team#${m.away_team_id}`,
+      home_logo:   home?.logo ?? null,
+      away_logo:   away?.logo ?? null,
+      score_home:  m.score_home,
+      score_away:  m.score_away,
+      tries_home:  m.tries_home,
+      tries_away:  m.tries_away,
       yellow_home: m.yellow_home,
       yellow_away: m.yellow_away,
-      red_home: m.red_home,
-      red_away: m.red_away,
-      bonus_off_home: m.bonus_off_home,
-      bonus_def_home: m.bonus_def_home,
-      bonus_off_away: m.bonus_off_away,
-      bonus_def_away: m.bonus_def_away,
+      red_home:    m.red_home,
+      red_away:    m.red_away,
     };
   });
 
   const upsertMatch = db.prepare(`
-    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, tries_home, tries_away, yellow_home, yellow_away, red_home, red_away, updated_at)
-    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, @bonus_off_home, @bonus_def_home, @bonus_off_away, @bonus_def_away, @tries_home, @tries_away, @yellow_home, @yellow_away, @red_home, @red_away, CURRENT_TIMESTAMP)
+    INSERT INTO matches (ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, tries_home, tries_away, yellow_home, yellow_away, red_home, red_away, manual, updated_at)
+    VALUES (@ffse_event_id, @matchday, @division, @date, @time, @location, @home_team, @away_team, @score_home, @score_away, @bonus_off_home, @bonus_def_home, @bonus_off_away, @bonus_def_away, @tries_home, @tries_away, @yellow_home, @yellow_away, @red_home, @red_away, 0, CURRENT_TIMESTAMP)
     ON CONFLICT(matchday, division, home_team, away_team) DO UPDATE SET
       ffse_event_id  = excluded.ffse_event_id,
-      score_home     = COALESCE(excluded.score_home, matches.score_home),
-      score_away     = COALESCE(excluded.score_away, matches.score_away),
-      bonus_off_home = excluded.bonus_off_home,
-      bonus_def_home = excluded.bonus_def_home,
-      bonus_off_away = excluded.bonus_off_away,
-      bonus_def_away = excluded.bonus_def_away,
-      tries_home     = excluded.tries_home,
-      tries_away     = excluded.tries_away,
-      yellow_home    = excluded.yellow_home,
-      yellow_away    = excluded.yellow_away,
-      red_home       = excluded.red_home,
-      red_away       = excluded.red_away,
+      score_home     = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.score_home ELSE matches.score_home END,
+      score_away     = CASE WHEN excluded.score_away IS NOT NULL THEN excluded.score_away ELSE matches.score_away END,
+      manual         = CASE WHEN excluded.score_home IS NOT NULL THEN 0 ELSE matches.manual END,
+      bonus_off_home = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.bonus_off_home ELSE matches.bonus_off_home END,
+      bonus_def_home = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.bonus_def_home ELSE matches.bonus_def_home END,
+      bonus_off_away = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.bonus_off_away ELSE matches.bonus_off_away END,
+      bonus_def_away = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.bonus_def_away ELSE matches.bonus_def_away END,
+      tries_home     = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.tries_home ELSE matches.tries_home END,
+      tries_away     = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.tries_away ELSE matches.tries_away END,
+      yellow_home    = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.yellow_home ELSE matches.yellow_home END,
+      yellow_away    = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.yellow_away ELSE matches.yellow_away END,
+      red_home       = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.red_home ELSE matches.red_home END,
+      red_away       = CASE WHEN excluded.score_home IS NOT NULL THEN excluded.red_away ELSE matches.red_away END,
       date           = excluded.date,
       time           = excluded.time,
       location       = excluded.location,
@@ -453,69 +450,66 @@ async function refreshDivision(division: Division) {
 
   db.transaction(() => {
     // Sauvegarder positions actuelles avant MAJ
-      const currentRankings = db.prepare(
-        "SELECT team, points FROM rankings WHERE division = ? ORDER BY points DESC, diff DESC"
+    const currentRankings = db.prepare(
+      "SELECT team, points FROM rankings WHERE division = ? ORDER BY points DESC, diff DESC"
+    ).all(division) as any[];
+
+    if (currentRankings.length > 0) {
+      const savedAt = new Date().toISOString();
+      const saveHistory = db.prepare(`
+        INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      currentRankings.forEach((r, idx) => {
+        saveHistory.run(r.team, division, idx + 1, r.points, savedAt);
+      });
+    } else {
+      // Première MAJ — initialiser depuis J-1
+      const allMatchesInDb = db.prepare(
+        "SELECT * FROM matches WHERE division = ? AND score_home IS NOT NULL ORDER BY matchday ASC"
       ).all(division) as any[];
-      
-      if (currentRankings.length > 0) {
-        const savedAt = new Date().toISOString();
-        const saveHistory = db.prepare(`
-          INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
-          VALUES (?, ?, ?, ?, ?)
-        `);
-        currentRankings.forEach((r, idx) => {
-          saveHistory.run(r.team, division, idx + 1, r.points, savedAt);
-        });
-      } else {
-        // Première MAJ — initialiser depuis J-1
-        const allMatchesInDb = db.prepare(
-          "SELECT * FROM matches WHERE division = ? AND score_home IS NOT NULL ORDER BY matchday ASC"
-        ).all(division) as any[];
-      
-        if (allMatchesInDb.length > 0) {
-          const maxMatchday = Math.max(...allMatchesInDb.map((m: any) => m.matchday));
-          const prevMatches = allMatchesInDb.filter((m: any) => m.matchday < maxMatchday);
-      
-          if (prevMatches.length > 0) {
-            // Calculer points par équipe à J-1
-            const pointsMap = new Map<string, number>();
-            for (const m of prevMatches) {
-              const home = m.home_team;
-              const away = m.away_team;
-              if (!pointsMap.has(home)) pointsMap.set(home, 0);
-              if (!pointsMap.has(away)) pointsMap.set(away, 0);
-      
-              if (m.score_home > m.score_away) {
-                pointsMap.set(home, pointsMap.get(home)! + 4);
-              } else if (m.score_away > m.score_home) {
-                pointsMap.set(away, pointsMap.get(away)! + 4);
-              } else {
-                pointsMap.set(home, pointsMap.get(home)! + 2);
-                pointsMap.set(away, pointsMap.get(away)! + 2);
-              }
+
+      if (allMatchesInDb.length > 0) {
+        const maxMatchday = Math.max(...allMatchesInDb.map((m: any) => m.matchday));
+        const prevMatches = allMatchesInDb.filter((m: any) => m.matchday < maxMatchday);
+
+        if (prevMatches.length > 0) {
+          const pointsMap = new Map<string, number>();
+          for (const m of prevMatches) {
+            const home = m.home_team;
+            const away = m.away_team;
+            if (!pointsMap.has(home)) pointsMap.set(home, 0);
+            if (!pointsMap.has(away)) pointsMap.set(away, 0);
+
+            if (m.score_home > m.score_away) {
+              pointsMap.set(home, pointsMap.get(home)! + 4);
+            } else if (m.score_away > m.score_home) {
+              pointsMap.set(away, pointsMap.get(away)! + 4);
+            } else {
+              pointsMap.set(home, pointsMap.get(home)! + 2);
+              pointsMap.set(away, pointsMap.get(away)! + 2);
             }
-      
-            // Trier et sauvegarder comme historique J-1
-            const sorted = Array.from(pointsMap.entries())
-              .sort((a, b) => b[1] - a[1]);
-      
-            const savedAt = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); // -7 jours
-            const saveHistory = db.prepare(`
-              INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
-              VALUES (?, ?, ?, ?, ?)
-            `);
-            sorted.forEach(([team, pts], idx) => {
-              saveHistory.run(team, division, idx + 1, pts, savedAt);
-            });
-            console.log(`[history] ${division.toUpperCase()} initialisé depuis J${maxMatchday - 1}`);
           }
+
+          const sorted = Array.from(pointsMap.entries()).sort((a, b) => b[1] - a[1]);
+          const savedAt = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          const saveHistory = db.prepare(`
+            INSERT OR REPLACE INTO rankings_history (team, division, position, points, saved_at)
+            VALUES (?, ?, ?, ?, ?)
+          `);
+          sorted.forEach(([team, pts], idx) => {
+            saveHistory.run(team, division, idx + 1, pts, savedAt);
+          });
+          console.log(`[history] ${division.toUpperCase()} initialisé depuis J${maxMatchday - 1}`);
         }
       }
+    }
 
     for (const [id, team] of teamMap) {
       const canonicalName = rankingNameMap.get(id) ?? team.name;
       if (canonicalName && team.logo) upsertClub.run(canonicalName, team.logo);
     }
+
     for (const m of allMatches) {
       const { home_logo, away_logo, ...matchData } = m;
       const th = matchData.tries_home ?? 0;
@@ -523,21 +517,22 @@ async function refreshDivision(division: Division) {
       const sh = matchData.score_home;
       const sa = matchData.score_away;
       const played = sh !== null && sa !== null;
-  
+
       upsertMatch.run({
-          ...matchData,
-          tries_home: th,
-          tries_away: ta,
-          yellow_home: matchData.yellow_home ?? 0,
-          yellow_away: matchData.yellow_away ?? 0,
-          red_home: matchData.red_home ?? 0,
-          red_away: matchData.red_away ?? 0,
-          bonus_off_home: played && (th - ta) >= 3 ? 1 : 0,
-          bonus_off_away: played && (ta - th) >= 3 ? 1 : 0,
-          bonus_def_home: played && sh! < sa! && (sa! - sh!) <= 7 ? 1 : 0,
-          bonus_def_away: played && sa! < sh! && (sh! - sa!) <= 7 ? 1 : 0,
-        });
+        ...matchData,
+        tries_home:    th,
+        tries_away:    ta,
+        yellow_home:   matchData.yellow_home ?? 0,
+        yellow_away:   matchData.yellow_away ?? 0,
+        red_home:      matchData.red_home ?? 0,
+        red_away:      matchData.red_away ?? 0,
+        bonus_off_home: played && (th - ta) >= 3 ? 1 : 0,
+        bonus_off_away: played && (ta - th) >= 3 ? 1 : 0,
+        bonus_def_home: played && sh! < sa! && (sa! - sh!) <= 7 ? 1 : 0,
+        bonus_def_away: played && sa! < sh! && (sh! - sa!) <= 7 ? 1 : 0,
+      });
     }
+
     if (allRankings.length > 0) {
       db.prepare("DELETE FROM rankings WHERE division = ?").run(division);
       for (const r of allRankings) insertRanking.run({ ...r, division });
@@ -547,10 +542,10 @@ async function refreshDivision(division: Division) {
 
   // Fetcher les stats détaillées pour les matchs joués sans essais/cartons
   const matchesMissingStats = db.prepare(`
-    SELECT ffse_event_id FROM matches 
-    WHERE division = ? 
-    AND score_home IS NOT NULL 
-    AND tries_home = 0 
+    SELECT ffse_event_id FROM matches
+    WHERE division = ?
+    AND score_home IS NOT NULL
+    AND tries_home = 0
     AND tries_away = 0
     AND ffse_event_id IS NOT NULL
   `).all(division) as any[];
@@ -655,11 +650,60 @@ app.get("/admin/debug-fetch", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.post("/admin/manual-score", authenticateAdmin, async (req, res) => {
+  try {
+    const { team1, team2, score1, score2, yellow1, yellow2, red1, red2 } = req.body;
+
+    if (!team1 || !team2 || score1 === undefined || score2 === undefined) {
+      return res.status(400).json({ error: "Paramètres manquants" });
+    }
+
+    const match = db.prepare(`
+      SELECT * FROM matches
+      WHERE ((home_team = ? AND away_team = ?) OR (home_team = ? AND away_team = ?))
+      AND score_home IS NULL
+    `).get(team1, team2, team2, team1) as any;
+
+    if (!match) return res.status(404).json({ error: "Match non trouvé ou déjà joué" });
+
+    const isNormal = match.home_team === team1;
+    const sh = Number(isNormal ? score1 : score2);
+    const sa = Number(isNormal ? score2 : score1);
+    const yh = Number(isNormal ? yellow1 : yellow2) || 0;
+    const ya = Number(isNormal ? yellow2 : yellow1) || 0;
+    const rh = Number(isNormal ? red1 : red2) || 0;
+    const ra = Number(isNormal ? red2 : red1) || 0;
+
+    db.prepare(`
+      UPDATE matches SET
+        score_home  = ?,
+        score_away  = ?,
+        yellow_home = ?,
+        yellow_away = ?,
+        red_home    = ?,
+        red_away    = ?,
+        manual      = 1,
+        updated_at  = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(sh, sa, yh, ya, rh, ra, match.id);
+
+    res.json({
+      success: true,
+      matchId: match.id,
+      home_team: match.home_team,
+      away_team: match.away_team,
+      score: `${sh}-${sa}`,
+    });
+  } catch (error: any) {
+    console.error("[manual-score] Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/match/:eventId", async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    // Récupérer le match en DB
     const match = db.prepare(`
       SELECT m.*, c_home.logo AS home_logo, c_away.logo AS away_logo
       FROM matches m
@@ -670,14 +714,12 @@ app.get("/api/match/:eventId", async (req, res) => {
 
     if (!match) return res.status(404).json({ error: "Match not found" });
 
-    // Fetch stats depuis FFSE
     const eventRes = await fetch(`${FFSE_BASE}/sportspress/v2/events/${eventId}`, {
       headers: { Accept: "application/json" },
     });
     if (!eventRes.ok) return res.status(500).json({ error: "Failed to fetch event" });
     const event = await eventRes.json();
 
-    // Fetch venue
     let venue = null;
     if (event.venues?.length > 0) {
       const venueRes = await fetch(`${FFSE_BASE}/sportspress/v2/venues/${event.venues[0]}`, {
@@ -686,7 +728,6 @@ app.get("/api/match/:eventId", async (req, res) => {
       if (venueRes.ok) venue = await venueRes.json();
     }
 
-    // Parser les stats
     const homeId = String(event.teams?.[0]);
     const awayId = String(event.teams?.[1]);
     const results = event.results || {};
