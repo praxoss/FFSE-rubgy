@@ -687,6 +687,45 @@ app.post("/admin/manual-score", authenticateAdmin, async (req, res) => {
       WHERE id = ?
     `).run(sh, sa, yh, ya, rh, ra, match.id);
 
+    // Mettre à jour le classement provisoire
+    const division = match.division;
+    if (sh !== sa) {
+      const winner = sh > sa ? match.home_team : match.away_team;
+      const loser = sh > sa ? match.away_team : match.home_team;
+      db.prepare(`
+        UPDATE rankings SET
+          points = points + 4,
+          played = played + 1,
+          won    = won + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE team = ? AND division = ?
+      `).run(winner, division);
+      db.prepare(`
+        UPDATE rankings SET
+          played = played + 1,
+          lost   = lost + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE team = ? AND division = ?
+      `).run(loser, division);
+    } else {
+      db.prepare(`
+        UPDATE rankings SET
+          points = points + 2,
+          played = played + 1,
+          drawn  = drawn + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE team = ? AND division = ?
+      `).run(match.home_team, division);
+      db.prepare(`
+        UPDATE rankings SET
+          points = points + 2,
+          played = played + 1,
+          drawn  = drawn + 1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE team = ? AND division = ?
+      `).run(match.away_team, division);
+    }
+
     res.json({
       success: true,
       matchId: match.id,
@@ -702,6 +741,36 @@ app.post("/admin/manual-score", authenticateAdmin, async (req, res) => {
 
 app.post("/admin/clear-manual", authenticateAdmin, async (req, res) => {
   try {
+    // Récupérer les matchs manuels avant de les effacer
+    const manualMatches = db.prepare(`SELECT * FROM matches WHERE manual = 1`).all() as any[];
+
+    // Annuler les points dans le classement
+    for (const m of manualMatches) {
+      if (m.score_home !== null && m.score_away !== null) {
+        if (m.score_home !== m.score_away) {
+          const winner = m.score_home > m.score_away ? m.home_team : m.away_team;
+          const loser = m.score_home > m.score_away ? m.away_team : m.home_team;
+          db.prepare(`
+            UPDATE rankings SET points = points - 4, played = played - 1, won = won - 1
+            WHERE team = ? AND division = ?
+          `).run(winner, m.division);
+          db.prepare(`
+            UPDATE rankings SET played = played - 1, lost = lost - 1
+            WHERE team = ? AND division = ?
+          `).run(loser, m.division);
+        } else {
+          db.prepare(`
+            UPDATE rankings SET points = points - 2, played = played - 1, drawn = drawn - 1
+            WHERE team = ? AND division = ?
+          `).run(m.home_team, m.division);
+          db.prepare(`
+            UPDATE rankings SET points = points - 2, played = played - 1, drawn = drawn - 1
+            WHERE team = ? AND division = ?
+          `).run(m.away_team, m.division);
+        }
+      }
+    }
+
     const result = db.prepare(`
       UPDATE matches SET
         score_home  = NULL,
