@@ -700,6 +700,26 @@ app.post("/admin/manual-score", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.post("/admin/clear-manual", authenticateAdmin, async (req, res) => {
+  try {
+    const result = db.prepare(`
+      UPDATE matches SET
+        score_home  = NULL,
+        score_away  = NULL,
+        yellow_home = 0,
+        yellow_away = 0,
+        red_home    = 0,
+        red_away    = 0,
+        manual      = 0,
+        updated_at  = CURRENT_TIMESTAMP
+      WHERE manual = 1
+    `).run();
+    res.json({ success: true, cleared: result.changes });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/match/:eventId", async (req, res) => {
   try {
     const { eventId } = req.params;
