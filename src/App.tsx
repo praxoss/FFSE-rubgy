@@ -919,7 +919,8 @@ function DivisionPage() {
                           transition={{ delay: idx * 0.03 }}
                           className={`hover:bg-neutral-50 transition-colors ${
                             division === "d3" && idx === 0 ? "border-l-4 border-l-emerald-500" :
-                            division === "d3" && idx < 8 ? "border-l-4 border-l-blue-400" : ""
+                            division === "d3" && idx < 8 ? "border-l-4 border-l-blue-400" :
+                            division === "d3" && idx >= 12 ? "border-l-4 border-l-red-400" : ""
                           }`}
                         >
                           <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
@@ -977,6 +978,10 @@ function DivisionPage() {
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-sm bg-blue-400" />
                   <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Phases finales</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-red-400" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Relégation</span>
                 </div>
               </div>
             )}
