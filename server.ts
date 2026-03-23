@@ -601,7 +601,31 @@ async function refreshDivision(division: Division) {
     }
   }
 
+  // Réappliquer les scores manuels sur le classement fraîchement mis à jour
+  const manualMatches = db.prepare(`
+    SELECT * FROM matches WHERE division = ? AND manual = 1
+  `).all(division) as any[];
+
+  for (const m of manualMatches) {
+    if (m.score_home !== null && m.score_away !== null) {
+      if (m.score_home !== m.score_away) {
+        const winner = m.score_home > m.score_away ? m.home_team : m.away_team;
+        const loser = m.score_home > m.score_away ? m.away_team : m.home_team;
+        db.prepare(`UPDATE rankings SET points = points + 4, played = played + 1, won = won + 1 WHERE team = ? AND division = ?`).run(winner, division);
+        db.prepare(`UPDATE rankings SET played = played + 1, lost = lost + 1 WHERE team = ? AND division = ?`).run(loser, division);
+      } else {
+        db.prepare(`UPDATE rankings SET points = points + 2, played = played + 1, drawn = drawn + 1 WHERE team = ? AND division = ?`).run(m.home_team, division);
+        db.prepare(`UPDATE rankings SET points = points + 2, played = played + 1, drawn = drawn + 1 WHERE team = ? AND division = ?`).run(m.away_team, division);
+      }
+    }
+  }
+
+  if (manualMatches.length > 0) {
+    console.log(`[refresh] ${division.toUpperCase()} — ${manualMatches.length} scores manuels réappliqués`);
+  }
+
   console.log(`[refresh] ${division.toUpperCase()} done — ${allMatches.length} matches, ${allRankings.length} teams`);
+  return { allMatches, allRankings };
   return { allMatches, allRankings };
 }
 
