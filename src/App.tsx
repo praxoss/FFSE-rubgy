@@ -72,6 +72,105 @@ interface DivisionData {
 type Division = "d1" | "d2" | "d3" | "d4";
 type Tab = "ranking" | "results";
 
+// ── Config phases finales par division ───────────────────
+const PLAYOFF_CONFIG: Partial<Record<Division, { qualifiedCount: number }>> = {
+  d3: { qualifiedCount: 8 },
+};
+
+// ── Composant Bracket Phases Finales ─────────────────────
+function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
+  const top8 = rankings.slice(0, 8);
+  if (top8.length < 8) return null;
+
+  const quarters = [
+    { label: "QF1", home: top8[0], away: top8[7] },
+    { label: "QF2", home: top8[1], away: top8[6] },
+    { label: "QF3", home: top8[2], away: top8[5] },
+    { label: "QF4", home: top8[3], away: top8[4] },
+  ];
+
+  const semis = [
+    { label: "1/2 A", teams: ["Vainqueur QF1", "Vainqueur QF4"] },
+    { label: "1/2 B", teams: ["Vainqueur QF2", "Vainqueur QF3"] },
+  ];
+
+  const TeamRow = ({ team, seed }: { team: Ranking; seed: number }) => (
+    <div className="flex items-center gap-2 py-2 px-3">
+      <span className="text-[10px] font-display text-neutral-300 w-4 shrink-0">{seed}</span>
+      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
+        <img
+          src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
+          alt="" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer"
+        />
+      </div>
+      <span className="font-bold text-xs text-neutral-800 truncate flex-1">{team.team}</span>
+      <span className="text-[10px] font-mono text-neutral-400">{team.points}pts</span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Quarts de finale */}
+      <div>
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Quarts de finale</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {quarters.map((qf) => (
+            <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+              <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+                <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Demi-finales */}
+      <div>
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {semis.map((sf) => (
+            <div key={sf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+              <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{sf.label}</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                {sf.teams.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2 py-2 px-3">
+                    <div className="w-6 h-6 bg-neutral-100 rounded-full shrink-0" />
+                    <span className="text-xs text-neutral-400 italic">{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Finale */}
+      <div>
+        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Finale</h3>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+          <div className="bg-ffse-navy px-3 py-1.5 border-b border-neutral-100">
+            <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
+          </div>
+          <div className="divide-y divide-neutral-100">
+            {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map((t, i) => (
+              <div key={i} className="flex items-center gap-2 py-2 px-3">
+                <div className="w-6 h-6 bg-neutral-100 rounded-full shrink-0" />
+                <span className="text-xs text-neutral-400 italic">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Modal Saisie Manuelle ─────────────────────────────────
 function ManualScoreModal({
   allMatches,
@@ -99,7 +198,6 @@ function ManualScoreModal({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Trouver le match correspondant
   const matchFound = useMemo(() => {
     if (!team1 || !team2 || team1 === team2) return null;
     return futureMatches.find(m =>
@@ -141,57 +239,37 @@ function ManualScoreModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         className="relative bg-white rounded-3xl shadow-2xl border border-neutral-200 w-full max-w-md overflow-hidden"
       >
-        {/* Header */}
         <div className="bg-ffse-navy text-white px-6 py-4 flex items-center justify-between border-b-4 border-ffse-red">
           <h2 className="font-display text-xl uppercase tracking-tighter">Saisie manuelle</h2>
-          <button onClick={onClose} className="text-blue-300 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="text-blue-300 hover:text-white transition-colors"><X size={20} /></button>
         </div>
-
         <div className="p-6 space-y-5">
-          {/* Équipe 1 */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Équipe 1</label>
             <select value={team1} onChange={e => setTeam1(e.target.value)} className={inputClass}>
               <option value="">Choisir une équipe…</option>
-              {allTeams.filter(t => t !== team2).map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
+              {allTeams.filter(t => t !== team2).map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-
-          {/* Équipe 2 */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Équipe 2</label>
             <select value={team2} onChange={e => setTeam2(e.target.value)} className={inputClass}>
               <option value="">Choisir une équipe…</option>
-              {allTeams.filter(t => t !== team1).map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
+              {allTeams.filter(t => t !== team1).map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-
-          {/* Indicateur match trouvé */}
           {team1 && team2 && (
             <div className={`text-xs font-bold px-3 py-2 rounded-lg ${matchFound ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-red-50 text-red-500 border border-red-200"}`}>
-              {matchFound
-                ? `✓ Match trouvé — J${matchFound.matchday} · ${matchFound.date}`
-                : "✗ Aucun match à venir entre ces deux équipes"}
+              {matchFound ? `✓ Match trouvé — J${matchFound.matchday} · ${matchFound.date}` : "✗ Aucun match à venir entre ces deux équipes"}
             </div>
           )}
-
-          {/* Scores */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Scores</label>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -206,12 +284,9 @@ function ManualScoreModal({
               </div>
             </div>
           </div>
-
-          {/* Cartons */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Cartons</label>
             <div className="grid grid-cols-2 gap-3">
-              {/* Eq1 */}
               <div className="space-y-2">
                 <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 truncate">{team1 || "Équipe 1"}</div>
                 <div className="flex items-center gap-2">
@@ -223,7 +298,6 @@ function ManualScoreModal({
                   <input type="number" min="0" value={red1} onChange={e => setRed1(e.target.value)} placeholder="0" className={smallInputClass} />
                 </div>
               </div>
-              {/* Eq2 */}
               <div className="space-y-2">
                 <div className="text-[9px] uppercase tracking-wider font-bold text-neutral-400 truncate">{team2 || "Équipe 2"}</div>
                 <div className="flex items-center gap-2">
@@ -237,12 +311,8 @@ function ManualScoreModal({
               </div>
             </div>
           </div>
-
-          {/* Erreur / Succès */}
           {error && <div className="text-xs text-red-500 font-bold bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</div>}
           {success && <div className="text-xs text-emerald-600 font-bold bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">{success}</div>}
-
-          {/* Bouton */}
           <button
             onClick={handleSubmit}
             disabled={submitting || !matchFound || score1 === "" || score2 === ""}
@@ -278,7 +348,6 @@ function DivisionPage() {
 
   const { rankings, matches } = data[division];
 
-  // Tous les matchs de toutes les divisions pour la modal
   const allMatchesAllDivisions = useMemo(() => [
     ...data.d1.matches,
     ...data.d2.matches,
@@ -296,6 +365,14 @@ function DivisionPage() {
   const defaultMatchday = useMemo(() => computeMatchday(matches), [matches]);
   const currentMatchday = day ? parseInt(day) : defaultMatchday;
   const maxMatchday = useMemo(() => matches.length > 0 ? Math.max(...matches.map(m => m.matchday)) : 1, [matches]);
+
+  // Phases finales : s'affiche si tous les matchs de saison régulière sont joués
+  const showPlayoffs = useMemo(() => {
+    if (!PLAYOFF_CONFIG[division]) return false;
+    const regularMatches = matches.filter(m => m.score_home !== null || m.score_away !== null || m.score_home === null);
+    const pending = matches.filter(m => m.score_home === null && !m.manual);
+    return pending.length === 0 && matches.length > 0 && rankings.length >= 8;
+  }, [matches, rankings, division]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -573,7 +650,6 @@ function DivisionPage() {
                 <Trophy className="text-ffse-red shrink-0" size={22} />
                 <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tighter">Statistiques</h2>
               </div>
-
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
                   <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Victoires</span>
@@ -585,7 +661,6 @@ function DivisionPage() {
                   <span className="font-display text-4xl text-neutral-400">{losses}</span>
                 </div>
               </div>
-
               <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden mb-3">
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-3 border-b border-neutral-100">
                   <div className="text-right pr-4">
@@ -619,7 +694,6 @@ function DivisionPage() {
                   </div>
                 </div>
               </div>
-
               {(yellowCards > 0 || redCards > 0) && (
                 <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm px-4 py-3 flex items-center justify-center gap-4 mb-3">
                   {yellowCards > 0 && (
@@ -639,7 +713,6 @@ function DivisionPage() {
                   )}
                 </div>
               )}
-
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-4 flex flex-col items-center gap-1">
                   <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400">Essais / match</span>
@@ -668,7 +741,6 @@ function DivisionPage() {
               {pastMatches.length === 0 && <p className="text-neutral-400 italic text-sm">Aucun résultat pour l'instant.</p>}
               {pastMatches.map((m) => (
                 <div key={m.id} className={`bg-white p-3 md:p-5 rounded-2xl shadow-sm border flex items-center gap-2 md:gap-4 ${m.manual ? "border-amber-300" : "border-neutral-200"}`}>
-                  {m.manual ? <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-2xl" /> : null}
                   <div className="flex-1 text-right min-w-0"><span className="font-bold text-xs md:text-sm text-neutral-800">{m.home_team}</span></div>
                   <div className="flex items-center gap-2 shrink-0">
                     <ClubLogo src={m.home_logo} seed={m.home_team} size="sm" />
@@ -744,7 +816,6 @@ function DivisionPage() {
     <div className="min-h-screen font-sans pb-20 bg-neutral-50">
       <Header />
 
-      {/* Modal saisie manuelle */}
       <AnimatePresence>
         {showManualModal && user && (
           <ManualScoreModal
@@ -785,83 +856,97 @@ function DivisionPage() {
         )}
 
         {activeTab === "results" ? (
-          <section className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-              <Calendar className="text-ffse-red shrink-0" size={22} />
-              <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Calendrier & Résultats</h2>
-            </div>
-            <div className="flex items-center justify-between mb-8 bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
-              <button onClick={() => navigateMatchday("prev")} className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400 hover:text-ffse-navy">
-                <ChevronLeft size={26} />
-              </button>
-              <h3 className="font-display text-2xl md:text-3xl uppercase tracking-tight text-ffse-navy">Journée {currentMatchday}</h3>
-              <button onClick={() => navigateMatchday("next")} className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400 hover:text-ffse-navy">
-                <ChevronRight size={26} />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {Object.keys(matchesByDate).sort((a, b) => b.localeCompare(a)).map(date => (
-                <div key={date} className="space-y-1">
-                  <div className="bg-neutral-100 py-1 px-4 text-neutral-500 font-bold text-[10px] uppercase tracking-wider rounded shadow-sm inline-block">
-                    {formatDate(date)}
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {matchesByDate[date].map((match) => (
-                      <div key={match.id} className="py-3 flex items-center gap-2 md:gap-4">
-                        <div className="flex-1 text-right min-w-0">
-                          <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.home_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
-                            {match.home_team}
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0 overflow-visible">
-                          <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
-                          <div className="relative overflow-visible">
-                            {(!!(match.bonus_off_home) || !!(match.bonus_def_home)) && (
-                              <div className="absolute -top-3 -left-2 flex flex-col gap-0.5 z-10">
-                                {!!match.bonus_off_home && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
-                                {!!match.bonus_def_home && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
-                              </div>
-                            )}
-                            {(!!(match.bonus_off_away) || !!(match.bonus_def_away)) && (
-                              <div className="absolute -top-3 -right-2 flex flex-col gap-0.5 z-10">
-                                {!!match.bonus_off_away && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
-                                {!!match.bonus_def_away && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
-                              </div>
-                            )}
-                            <div className={`${match.manual ? "bg-amber-500" : "bg-neutral-700"} text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg`}>
-                              {match.score_home !== null && match.score_away !== null ? (
-                                <button
-                                  onClick={() => match.ffse_event_id && !match.manual && navigate(`/${division}/match/${match.ffse_event_id}`)}
-                                  className={`flex items-center gap-2 ${match.ffse_event_id && !match.manual ? "hover:opacity-70 transition-opacity" : ""}`}
-                                >
-                                  <span className={match.score_home > match.score_away ? "text-white" : "text-white/50"}>{match.score_home}</span>
-                                  <span className="text-white/30 text-xs">–</span>
-                                  <span className={match.score_away > match.score_home ? "text-white" : "text-white/50"}>{match.score_away}</span>
-                                </button>
-                              ) : (
-                                <span className="text-[9px] font-sans font-bold uppercase tracking-tight text-neutral-300 text-center leading-tight">
-                                  {formatShortDateTime(match.date, match.time)}
-                                </span>
-                              )}
-                            </div>
+          <section className="max-w-3xl mx-auto space-y-10">
+            <div>
+              <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+                <Calendar className="text-ffse-red shrink-0" size={22} />
+                <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Calendrier & Résultats</h2>
+              </div>
+              <div className="flex items-center justify-between mb-8 bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
+                <button onClick={() => navigateMatchday("prev")} className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400 hover:text-ffse-navy">
+                  <ChevronLeft size={26} />
+                </button>
+                <h3 className="font-display text-2xl md:text-3xl uppercase tracking-tight text-ffse-navy">Journée {currentMatchday}</h3>
+                <button onClick={() => navigateMatchday("next")} className="p-2 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400 hover:text-ffse-navy">
+                  <ChevronRight size={26} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {Object.keys(matchesByDate).sort((a, b) => b.localeCompare(a)).map(date => (
+                  <div key={date} className="space-y-1">
+                    <div className="bg-neutral-100 py-1 px-4 text-neutral-500 font-bold text-[10px] uppercase tracking-wider rounded shadow-sm inline-block">
+                      {formatDate(date)}
+                    </div>
+                    <div className="divide-y divide-neutral-100">
+                      {matchesByDate[date].map((match) => (
+                        <div key={match.id} className="py-3 flex items-center gap-2 md:gap-4">
+                          <div className="flex-1 text-right min-w-0">
+                            <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.home_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
+                              {match.home_team}
+                            </button>
                           </div>
-                          <ClubLogo src={match.away_logo} seed={match.away_team} size="sm" />
+                          <div className="flex items-center gap-1.5 shrink-0 overflow-visible">
+                            <ClubLogo src={match.home_logo} seed={match.home_team} size="sm" />
+                            <div className="relative overflow-visible">
+                              {(!!(match.bonus_off_home) || !!(match.bonus_def_home)) && (
+                                <div className="absolute -top-3 -left-2 flex flex-col gap-0.5 z-10">
+                                  {!!match.bonus_off_home && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
+                                  {!!match.bonus_def_home && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
+                                </div>
+                              )}
+                              {(!!(match.bonus_off_away) || !!(match.bonus_def_away)) && (
+                                <div className="absolute -top-3 -right-2 flex flex-col gap-0.5 z-10">
+                                  {!!match.bonus_off_away && <span className="text-[9px] font-black text-white bg-[#DAB455] px-1 py-0 rounded font-mono leading-4">BO</span>}
+                                  {!!match.bonus_def_away && <span className="text-[9px] font-black border border-neutral-400 text-neutral-300 bg-neutral-700 px-1 py-0 rounded font-mono leading-4">BD</span>}
+                                </div>
+                              )}
+                              <div className={`${match.manual ? "bg-amber-500" : "bg-neutral-700"} text-white px-2.5 py-1.5 rounded flex items-center gap-1.5 font-display text-base md:text-xl min-w-[72px] md:min-w-[96px] justify-center shadow-lg`}>
+                                {match.score_home !== null && match.score_away !== null ? (
+                                  <button
+                                    onClick={() => match.ffse_event_id && !match.manual && navigate(`/${division}/match/${match.ffse_event_id}`)}
+                                    className={`flex items-center gap-2 ${match.ffse_event_id && !match.manual ? "hover:opacity-70 transition-opacity" : ""}`}
+                                  >
+                                    <span className={match.score_home > match.score_away ? "text-white" : "text-white/50"}>{match.score_home}</span>
+                                    <span className="text-white/30 text-xs">–</span>
+                                    <span className={match.score_away > match.score_home ? "text-white" : "text-white/50"}>{match.score_away}</span>
+                                  </button>
+                                ) : (
+                                  <span className="text-[9px] font-sans font-bold uppercase tracking-tight text-neutral-300 text-center leading-tight">
+                                    {formatShortDateTime(match.date, match.time)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <ClubLogo src={match.away_logo} seed={match.away_team} size="sm" />
+                          </div>
+                          <div className="flex-1 text-left min-w-0">
+                            <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.away_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
+                              {match.away_team}
+                            </button>
+                            {match.manual ? <span className="block text-[9px] text-amber-500 font-bold uppercase tracking-wider">Provisoire</span> : null}
+                          </div>
                         </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <button onClick={() => navigate(`/${division}/club/${encodeURIComponent(match.away_team)}`)} className="font-bold text-xs md:text-sm text-neutral-800 hover:text-ffse-blue transition-colors">
-                            {match.away_team}
-                          </button>
-                          {match.manual ? <span className="block text-[9px] text-amber-500 font-bold uppercase tracking-wider">Provisoire</span> : null}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {currentMatchdayMatches.length === 0 && (
-                <div className="text-center py-20 text-neutral-400 italic">Aucun match programmé pour cette journée.</div>
-              )}
+                ))}
+                {currentMatchdayMatches.length === 0 && (
+                  <div className="text-center py-20 text-neutral-400 italic">Aucun match programmé pour cette journée.</div>
+                )}
+              </div>
             </div>
+
+            {/* ── Section Phases Finales ── */}
+            {showPlayoffs && (
+              <div>
+                <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+                  <Trophy className="text-ffse-red shrink-0" size={22} />
+                  <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Phases Finales</h2>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 ml-auto">Projection</span>
+                </div>
+                <PlayoffBracket rankings={rankings} />
+              </div>
+            )}
           </section>
         ) : (
           <section className="max-w-5xl mx-auto">
@@ -923,7 +1008,7 @@ function DivisionPage() {
                             division === "d3" && idx >= 12 ? "border-l-4 border-l-red-400" : ""
                           }`}
                         >
-                          <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200 group-hover:text-neutral-300 transition-colors">{idx + 1}</td>
+                          <td className="pl-2 pr-0 py-3 font-display text-xl md:text-4xl text-neutral-200">{idx + 1}</td>
                           <td className="hidden md:table-cell px-1 py-3">
                             {team.trend === "up" && <span className="text-emerald-500 text-xs font-bold">▲</span>}
                             {team.trend === "down" && <span className="text-red-500 text-xs font-bold">▼</span>}
@@ -1106,7 +1191,6 @@ function MatchPage() {
                 </div>
                 <span className="font-bold text-sm text-neutral-800 leading-tight">{match.home_team}</span>
               </div>
-
               <div className="flex flex-col items-center gap-2 shrink-0">
                 {played ? (
                   <div className="relative">
@@ -1135,7 +1219,6 @@ function MatchPage() {
                   </div>
                 )}
               </div>
-
               <div className="flex-1 flex flex-col items-center gap-3 text-center">
                 <div className="relative overflow-visible">
                   {match.score_away! > match.score_home! && (
