@@ -369,10 +369,8 @@ function DivisionPage() {
   // Phases finales : s'affiche si tous les matchs de saison régulière sont joués
   const showPlayoffs = useMemo(() => {
     if (!PLAYOFF_CONFIG[division]) return false;
-    const regularMatches = matches.filter(m => m.score_home !== null || m.score_away !== null || m.score_home === null);
-    const pending = matches.filter(m => m.score_home === null && !m.manual);
-    return pending.length === 0 && matches.length > 0 && rankings.length >= 8;
-  }, [matches, rankings, division]);
+    return rankings.length >= 8;
+  }, [rankings, division]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
