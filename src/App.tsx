@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
 import StatsPage from "./StatsPage";
-import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut, PenLine, X } from "lucide-react";
+import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut, PenLine, X, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, isFirebaseConfigured } from "./firebase";
 
@@ -70,7 +70,7 @@ interface DivisionData {
 }
 
 type Division = "d1" | "d2" | "d3" | "d4";
-type Tab = "ranking" | "results";
+type Tab = "ranking" | "results" | "playoffs";
 
 // ── Config phases finales par division ───────────────────
 const PLAYOFF_CONFIG: Partial<Record<Division, { qualifiedCount: number }>> = {
@@ -332,7 +332,7 @@ function DivisionPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const division = (div || "d3") as Division;
-  const activeTab: Tab = location.pathname.includes("/results") ? "results" : "ranking";
+  const activeTab: Tab = location.pathname.includes("/playoffs") ? "playoffs" : location.pathname.includes("/results") ? "results" : "ranking";
 
   const [data, setData] = useState<Record<Division, DivisionData>>({
     d1: { rankings: [], matches: [] },
@@ -369,8 +369,10 @@ function DivisionPage() {
   // Phases finales : s'affiche si tous les matchs de saison régulière sont joués
   const showPlayoffs = useMemo(() => {
     if (!PLAYOFF_CONFIG[division]) return false;
-    return rankings.length >= 8;
-  }, [rankings, division]);
+    const regularMatches = matches.filter(m => m.score_home !== null || m.score_away !== null || m.score_home === null);
+    const pending = matches.filter(m => m.score_home === null && !m.manual);
+    return pending.length === 0 && matches.length > 0 && rankings.length >= 8;
+  }, [matches, rankings, division]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -827,13 +829,15 @@ function DivisionPage() {
 
       <div className="max-w-5xl mx-auto mt-6 px-4">
         <div className="bg-white p-1 rounded-xl flex gap-1 border border-neutral-200 shadow-sm">
-          {(["ranking", "results"] as Tab[]).map(t => (
-            <button key={t} onClick={() => navigate(`/${division}${t === "results" ? "/results" : ""}`)}
-              className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+          {(["ranking", "results", "playoffs"] as Tab[]).map(t => (
+            <button key={t} onClick={() => navigate(`/${division}${t === "results" ? "/results" : t === "playoffs" ? "/playoffs" : ""}`)}
+              className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === t ? "bg-ffse-navy text-white shadow-md" : "text-neutral-400 hover:text-ffse-navy hover:bg-neutral-50"
               }`}
             >
-              {t === "ranking" ? "Classement" : "Résultats et calendrier"}
+              {t === "ranking" && <><span className="hidden sm:inline">Classement</span><Trophy size={15} className="sm:hidden" /></>}
+              {t === "results" && <><span className="hidden sm:inline">Résultats et calendrier</span><Calendar size={15} className="sm:hidden" /></>}
+              {t === "playoffs" && <><span className="hidden sm:inline">Phases finales</span><Swords size={15} className="sm:hidden" /></>}
             </button>
           ))}
         </div>
@@ -934,16 +938,19 @@ function DivisionPage() {
               </div>
             </div>
 
-            {/* ── Section Phases Finales ── */}
-            {showPlayoffs && (
-              <div>
-                <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
-                  <Trophy className="text-ffse-red shrink-0" size={22} />
-                  <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Phases Finales</h2>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 ml-auto">Projection</span>
-                </div>
-                <PlayoffBracket rankings={rankings} />
-              </div>
+            {/* ── Section Phases Finales retirée — voir onglet Playoffs ── */}
+          </section>
+        ) : activeTab === "playoffs" ? (
+          <section className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 mb-6 border-b-4 border-ffse-navy pb-3">
+              <Swords className="text-ffse-red shrink-0" size={22} />
+              <h2 className="font-display text-xl md:text-3xl uppercase tracking-tighter">Phases Finales</h2>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 ml-auto">Projection</span>
+            </div>
+            {rankings.length >= 8 ? (
+              <PlayoffBracket rankings={rankings} />
+            ) : (
+              <p className="text-neutral-400 italic text-sm">Pas encore assez d'équipes classées.</p>
             )}
           </section>
         ) : (
@@ -1321,6 +1328,7 @@ export default function App() {
       <Route path="/:div" element={<DivisionPage />} />
       <Route path="/:div/results" element={<DivisionPage />} />
       <Route path="/:div/results/:day" element={<DivisionPage />} />
+      <Route path="/:div/playoffs" element={<DivisionPage />} />
       <Route path="/:div/club/:club" element={<DivisionPage />} />
       <Route path="/:div/stats" element={<StatsPage />} />
     </Routes>
