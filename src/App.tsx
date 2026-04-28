@@ -203,87 +203,82 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
       {/* ── Mobile ── */}
       <div className="md:hidden">
         <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
-          {["Quarts", "Demi-finales", "Finale"].map((col, i) => (
-            <button key={col} onClick={() => setActiveCol(i)}
-              className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}
-            >
-              {col}
-            </button>
-          ))}
+          <a href="#col-0" className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center transition-all ${activeCol === 0 ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}>Quarts</a>
+          <a href="#col-1" className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center transition-all ${activeCol === 1 ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}>Demi-finales</a>
+          <a href="#col-2" className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider text-center transition-all ${activeCol === 2 ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}>Finale</a>
         </div>
 
         <div
-          style={{ touchAction: "pan-y" }}
-          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
-          onTouchEnd={e => {
-            const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (dx < -50) setActiveCol(c => Math.min(c + 1, 2));
-            else if (dx > 50) setActiveCol(c => Math.max(c - 1, 0));
+          className="flex overflow-x-scroll gap-4"
+          style={{
+            scrollSnapType: "x mandatory",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
+          onScroll={e => {
+            const el = e.currentTarget;
+            const col = Math.round(el.scrollLeft / el.offsetWidth);
+            if (col !== activeCol) setActiveCol(col);
           }}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCol}
-              initial={{ opacity: 0, x: activeCol > 0 ? 40 : -40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-3"
-            >
-              {activeCol === 0 && quarters.map(qf => (
-                <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-                  <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {[qf.home, qf.away].map(team => (
-                      <div key={team.team} className="flex items-center gap-2 py-2.5 px-3">
-                        <span className="text-[10px] font-display text-neutral-300 w-4 shrink-0">{rankings.indexOf(team) + 1}</span>
-                        <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
-                          <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
-                        </div>
-                        <span className="font-bold text-xs text-neutral-800 truncate flex-1">{team.team}</span>
-                        <span className="text-[10px] font-mono text-neutral-400 shrink-0">{team.points}pts</span>
-                      </div>
-                    ))}
-                  </div>
+          <div id="col-0" className="shrink-0 space-y-3" style={{ scrollSnapAlign: "start", width: "100%" }}>
+            {quarters.map(qf => (
+              <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+                <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                  <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
                 </div>
-              ))}
-              {activeCol === 1 && [
-                { label: "1/2 A", t1: "Vainqueur QF1", t2: "Vainqueur QF4" },
-                { label: "1/2 B", t1: "Vainqueur QF2", t2: "Vainqueur QF3" },
-              ].map(sf => (
-                <div key={sf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-                  <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{sf.label}</span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {[sf.t1, sf.t2].map(t => (
-                      <div key={t} className="flex items-center gap-2 py-2.5 px-3">
-                        <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
-                        <span className="text-xs text-neutral-400 italic">{t}</span>
+                <div className="divide-y divide-neutral-100">
+                  {[qf.home, qf.away].map(team => (
+                    <div key={team.team} className="flex items-center gap-2 py-2.5 px-3">
+                      <span className="text-[10px] font-display text-neutral-300 w-4 shrink-0">{rankings.indexOf(team) + 1}</span>
+                      <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
+                        <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`} alt="" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
                       </div>
-                    ))}
-                  </div>
+                      <span className="font-bold text-xs text-neutral-800 truncate flex-1">{team.team}</span>
+                      <span className="text-[10px] font-mono text-neutral-400 shrink-0">{team.points}pts</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {activeCol === 2 && (
-                <div className="bg-white rounded-2xl border-2 border-ffse-navy shadow-md overflow-hidden">
-                  <div className="bg-ffse-navy px-3 py-2">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map(t => (
-                      <div key={t} className="flex items-center gap-2 py-2.5 px-3">
-                        <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
-                        <span className="text-xs text-neutral-400 italic">{t}</span>
-                      </div>
-                    ))}
-                  </div>
+              </div>
+            ))}
+          </div>
+
+          <div id="col-1" className="shrink-0 space-y-3" style={{ scrollSnapAlign: "start", width: "100%" }}>
+            {[
+              { label: "1/2 A", t1: "Vainqueur QF1", t2: "Vainqueur QF4" },
+              { label: "1/2 B", t1: "Vainqueur QF2", t2: "Vainqueur QF3" },
+            ].map(sf => (
+              <div key={sf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+                <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                  <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{sf.label}</span>
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                <div className="divide-y divide-neutral-100">
+                  {[sf.t1, sf.t2].map(t => (
+                    <div key={t} className="flex items-center gap-2 py-2.5 px-3">
+                      <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
+                      <span className="text-xs text-neutral-400 italic">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div id="col-2" className="shrink-0" style={{ scrollSnapAlign: "start", width: "100%" }}>
+            <div className="bg-white rounded-2xl border-2 border-ffse-navy shadow-md overflow-hidden">
+              <div className="bg-ffse-navy px-3 py-2">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map(t => (
+                  <div key={t} className="flex items-center gap-2 py-2.5 px-3">
+                    <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
+                    <span className="text-xs text-neutral-400 italic">{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-center gap-2 mt-4">
