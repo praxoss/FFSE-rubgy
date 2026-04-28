@@ -83,6 +83,23 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
   if (top8.length < 8) return null;
 
   const [activeCol, setActiveCol] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientX);
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (Math.abs(distance) >= minSwipeDistance) {
+      if (distance > 0) setActiveCol(c => Math.min(c + 1, 2));
+      else setActiveCol(c => Math.max(c - 1, 0));
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   const quarters = [
     { label: "QF1", home: top8[0], away: top8[7] },
@@ -90,6 +107,194 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
     { label: "QF2", home: top8[1], away: top8[6] },
     { label: "QF3", home: top8[2], away: top8[5] },
   ];
+
+  const TeamRow = ({ team, seed }: { team: Ranking; seed: number }) => (
+    <div className="flex items-center gap-2 py-2.5 px-3">
+      <span className="text-[10px] font-display text-neutral-300 w-4 shrink-0">{seed}</span>
+      <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
+        <img src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
+          alt="" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer" />
+      </div>
+      <span className="font-bold text-xs text-neutral-800 truncate flex-1">{team.team}</span>
+      <span className="text-[10px] font-mono text-neutral-400 shrink-0">{team.points}pts</span>
+    </div>
+  );
+
+  const PlaceholderRow = ({ label }: { label: string }) => (
+    <div className="flex items-center gap-2 py-2.5 px-3">
+      <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
+      <span className="text-xs text-neutral-400 italic">{label}</span>
+    </div>
+  );
+
+  const QFCard = ({ qf }: { qf: typeof quarters[0] }) => (
+    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+      <div className="bg-neutral-50 px-3 py-1 border-b border-neutral-100">
+        <span className="text-[8px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+      </div>
+      <div className="divide-y divide-neutral-100">
+        <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+        <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
+      </div>
+    </div>
+  );
+
+  const SFCard = ({ label, q1, q2 }: { label: string; q1: string; q2: string }) => (
+    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+      <div className="bg-neutral-50 px-3 py-1 border-b border-neutral-100">
+        <span className="text-[8px] uppercase tracking-widest font-bold text-neutral-400">{label}</span>
+      </div>
+      <div className="divide-y divide-neutral-100">
+        <PlaceholderRow label={q1} />
+        <PlaceholderRow label={q2} />
+      </div>
+    </div>
+  );
+
+  const FinalCard = () => (
+    <div className="bg-white rounded-xl border-2 border-ffse-navy shadow-md overflow-hidden">
+      <div className="bg-ffse-navy px-3 py-1.5">
+        <span className="text-[8px] uppercase tracking-widest font-bold text-white">Finale</span>
+      </div>
+      <div className="divide-y divide-neutral-100">
+        <PlaceholderRow label="Vainqueur 1/2 A" />
+        <PlaceholderRow label="Vainqueur 1/2 B" />
+      </div>
+    </div>
+  );
+
+  // Connecteur vertical SVG
+  const Connector = ({ top, bottom, align }: { top: number; bottom: number; align: "left" | "right" }) => (
+    <svg className="absolute" style={{ left: align === "left" ? "100%" : "auto", right: align === "right" ? "100%" : "auto", top: 0, width: 32, height: "100%", overflow: "visible" }} preserveAspectRatio="none">
+      <line x1={align === "left" ? 0 : 32} y1={top} x2={16} y2={top} stroke="#d1d5db" strokeWidth="1.5" />
+      <line x1={16} y1={top} x2={16} y2={bottom} stroke="#d1d5db" strokeWidth="1.5" />
+      <line x1={16} y1={bottom} x2={align === "left" ? 32 : 0} y2={bottom} stroke="#d1d5db" strokeWidth="1.5" />
+    </svg>
+  );
+
+  return (
+    <>
+      {/* ── Desktop ── */}
+      <div className="hidden md:block">
+        <div className="grid grid-cols-[1fr_40px_1fr_40px_1fr] gap-0 items-start">
+          {/* Col 1 : QF */}
+          <div>
+            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Quarts de finale</p>
+            <div className="space-y-3">
+              <QFCard qf={quarters[0]} />
+              <QFCard qf={quarters[1]} />
+              <div className="h-3" />
+              <QFCard qf={quarters[2]} />
+              <QFCard qf={quarters[3]} />
+            </div>
+          </div>
+
+          {/* Connecteur QF → 1/2 */}
+          <div className="relative self-stretch">
+            <svg width="40" height="100%" className="absolute inset-0" preserveAspectRatio="none" viewBox="0 0 40 500" style={{ height: "100%" }}>
+              {/* Ligne haut : milieu QF1+QF4 → milieu 1/2A */}
+              <line x1="0" y1="25%" x2="20" y2="25%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="10%" x2="20" y2="25%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="25%" x2="20" y2="40%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="40%" x2="20" y2="40%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="25%" x2="40" y2="25%" stroke="#d1d5db" strokeWidth="1.5" />
+              {/* Ligne bas : milieu QF2+QF3 → milieu 1/2B */}
+              <line x1="0" y1="65%" x2="20" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="60%" x2="20" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="65%" x2="20" y2="90%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="90%" x2="20" y2="90%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="75%" x2="40" y2="75%" stroke="#d1d5db" strokeWidth="1.5" />
+            </svg>
+          </div>
+
+          {/* Col 2 : 1/2 */}
+          <div className="flex flex-col justify-around h-full py-8">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
+            <div className="space-y-4">
+              <SFCard label="1/2 A" q1="Vainqueur QF1" q2="Vainqueur QF4" />
+              <SFCard label="1/2 B" q1="Vainqueur QF2" q2="Vainqueur QF3" />
+            </div>
+          </div>
+
+          {/* Connecteur 1/2 → Finale */}
+          <div className="relative self-stretch">
+            <svg width="40" height="100%" className="absolute inset-0" preserveAspectRatio="none" viewBox="0 0 40 500" style={{ height: "100%" }}>
+              <line x1="0" y1="30%" x2="20" y2="30%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="30%" x2="20" y2="70%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="70%" x2="20" y2="70%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="50%" x2="40" y2="50%" stroke="#d1d5db" strokeWidth="1.5" />
+            </svg>
+          </div>
+
+          {/* Col 3 : Finale */}
+          <div className="flex flex-col justify-center h-full">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Finale</p>
+            <FinalCard />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile carousel ── */}
+      <div className="md:hidden">
+        <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
+          {["Quarts", "Demi-finales", "Finale"].map((col, i) => (
+            <button key={col} onClick={() => setActiveCol(i)}
+              className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"
+              }`}
+            >
+              {col}
+            </button>
+          ))}
+        </div>
+
+        <div
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCol}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.18 }}
+              className="space-y-3"
+            >
+              {activeCol === 0 && quarters.map(qf => (
+                <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+                  <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+                  </div>
+                  <div className="divide-y divide-neutral-100">
+                    <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+                    <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
+                  </div>
+                </div>
+              ))}
+              {activeCol === 1 && (
+                <div className="space-y-3">
+                  <SFCard label="1/2 A" q1="Vainqueur QF1" q2="Vainqueur QF4" />
+                  <SFCard label="1/2 B" q1="Vainqueur QF2" q2="Vainqueur QF3" />
+                </div>
+              )}
+              {activeCol === 2 && <FinalCard />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="flex justify-center gap-2 mt-4">
+          {[0, 1, 2].map(i => (
+            <button key={i} onClick={() => setActiveCol(i)}
+              className={`w-2 h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy w-4" : "bg-neutral-300"}`}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
 
   const columns = ["Quarts", "Demi-finales", "Finale"];
 
