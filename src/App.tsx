@@ -82,42 +82,64 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
   const top8 = rankings.slice(0, 8);
   if (top8.length < 8) return null;
 
+  const [activeCol, setActiveCol] = useState(0);
+
   const quarters = [
     { label: "QF1", home: top8[0], away: top8[7] },
+    { label: "QF4", home: top8[3], away: top8[4] },
     { label: "QF2", home: top8[1], away: top8[6] },
     { label: "QF3", home: top8[2], away: top8[5] },
-    { label: "QF4", home: top8[3], away: top8[4] },
   ];
 
-  const semis = [
-    { label: "1/2 A", teams: ["Vainqueur QF1", "Vainqueur QF4"] },
-    { label: "1/2 B", teams: ["Vainqueur QF2", "Vainqueur QF3"] },
-  ];
+  const columns = ["Quarts", "Demi-finales", "Finale"];
 
   const TeamRow = ({ team, seed }: { team: Ranking; seed: number }) => (
-    <div className="flex items-center gap-2 py-2 px-3">
+    <div className="flex items-center gap-2 py-2.5 px-3">
       <span className="text-[10px] font-display text-neutral-300 w-4 shrink-0">{seed}</span>
-      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
+      <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center border border-neutral-100 shadow-sm overflow-hidden shrink-0">
         <img
           src={team.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${team.team}&backgroundColor=f5f5f5&textColor=999`}
           alt="" className="w-full h-full object-contain p-0.5" referrerPolicy="no-referrer"
         />
       </div>
       <span className="font-bold text-xs text-neutral-800 truncate flex-1">{team.team}</span>
-      <span className="text-[10px] font-mono text-neutral-400">{team.points}pts</span>
+      <span className="text-[10px] font-mono text-neutral-400 shrink-0">{team.points}pts</span>
     </div>
   );
 
-  return (
-    <div className="space-y-8">
-      {/* Quarts de finale */}
-      <div>
-        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Quarts de finale</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {quarters.map((qf) => (
-            <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-              <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
-                <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+  const PlaceholderRow = ({ label }: { label: string }) => (
+    <div className="flex items-center gap-2 py-2.5 px-3">
+      <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
+      <span className="text-xs text-neutral-400 italic">{label}</span>
+    </div>
+  );
+
+  // Desktop : bracket horizontal complet
+  const DesktopBracket = () => (
+    <div className="hidden md:flex gap-0 items-start">
+      {/* Quarts */}
+      <div className="flex flex-col gap-3 w-56 shrink-0">
+        <div className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1 px-1">Quarts de finale</div>
+        {/* QF1 + QF4 → 1/2 A */}
+        <div className="space-y-1">
+          {[quarters[0], quarters[1]].map(qf => (
+            <div key={qf.label} className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+              <div className="bg-neutral-50 px-3 py-1 border-b border-neutral-100">
+                <span className="text-[8px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+                <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* QF2 + QF3 → 1/2 B */}
+        <div className="space-y-1 mt-4">
+          {[quarters[2], quarters[3]].map(qf => (
+            <div key={qf.label} className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+              <div className="bg-neutral-50 px-3 py-1 border-b border-neutral-100">
+                <span className="text-[8px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
               </div>
               <div className="divide-y divide-neutral-100">
                 <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
@@ -128,46 +150,144 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
         </div>
       </div>
 
+      {/* Connecteurs QF → 1/2 */}
+      <div className="flex flex-col justify-between w-8 shrink-0 self-stretch py-6">
+        <div className="flex flex-col items-center h-1/2">
+          <div className="w-4 h-px bg-neutral-300 mt-14" />
+          <div className="w-px flex-1 bg-neutral-300" />
+          <div className="w-4 h-px bg-neutral-300 mb-14" />
+        </div>
+        <div className="flex flex-col items-center h-1/2">
+          <div className="w-4 h-px bg-neutral-300 mt-14" />
+          <div className="w-px flex-1 bg-neutral-300" />
+          <div className="w-4 h-px bg-neutral-300 mb-14" />
+        </div>
+      </div>
+
       {/* Demi-finales */}
-      <div>
-        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {semis.map((sf) => (
+      <div className="flex flex-col justify-between w-52 shrink-0 self-stretch py-10">
+        <div className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1 px-1 absolute -mt-8">Demi-finales</div>
+        {[
+          { label: "1/2 A", teams: ["Vainqueur QF1", "Vainqueur QF4"] },
+          { label: "1/2 B", teams: ["Vainqueur QF2", "Vainqueur QF3"] },
+        ].map(sf => (
+          <div key={sf.label} className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+            <div className="bg-neutral-50 px-3 py-1 border-b border-neutral-100">
+              <span className="text-[8px] uppercase tracking-widest font-bold text-neutral-400">{sf.label}</span>
+            </div>
+            <div className="divide-y divide-neutral-100">
+              {sf.teams.map((t, i) => <PlaceholderRow key={i} label={t} />)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Connecteur 1/2 → Finale */}
+      <div className="flex flex-col items-center w-8 shrink-0 self-stretch justify-center">
+        <div className="w-4 h-px bg-neutral-300 mt-4" />
+        <div className="w-px flex-1 bg-neutral-300" />
+        <div className="w-4 h-px bg-neutral-300 mb-4" />
+      </div>
+
+      {/* Finale */}
+      <div className="flex flex-col justify-center w-52 shrink-0 self-stretch">
+        <div className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-2 px-1">Finale</div>
+        <div className="bg-white rounded-xl border-2 border-ffse-navy shadow-md overflow-hidden">
+          <div className="bg-ffse-navy px-3 py-1.5">
+            <span className="text-[8px] uppercase tracking-widest font-bold text-white">Finale</span>
+          </div>
+          <div className="divide-y divide-neutral-100">
+            <PlaceholderRow label="Vainqueur 1/2 A" />
+            <PlaceholderRow label="Vainqueur 1/2 B" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile : carousel par colonne
+  const MobileBracket = () => (
+    <div className="md:hidden">
+      {/* Tabs colonnes */}
+      <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
+        {columns.map((col, i) => (
+          <button
+            key={col}
+            onClick={() => setActiveCol(i)}
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+              activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"
+            }`}
+          >
+            {col}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeCol}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-3"
+        >
+          {activeCol === 0 && quarters.map(qf => (
+            <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+              <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+                <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
+              </div>
+            </div>
+          ))}
+
+          {activeCol === 1 && [
+            { label: "1/2 A", teams: ["Vainqueur QF1", "Vainqueur QF4"] },
+            { label: "1/2 B", teams: ["Vainqueur QF2", "Vainqueur QF3"] },
+          ].map(sf => (
             <div key={sf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
               <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
                 <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{sf.label}</span>
               </div>
               <div className="divide-y divide-neutral-100">
-                {sf.teams.map((t, i) => (
-                  <div key={i} className="flex items-center gap-2 py-2 px-3">
-                    <div className="w-6 h-6 bg-neutral-100 rounded-full shrink-0" />
-                    <span className="text-xs text-neutral-400 italic">{t}</span>
-                  </div>
-                ))}
+                {sf.teams.map((t, i) => <PlaceholderRow key={i} label={t} />)}
               </div>
             </div>
           ))}
-        </div>
-      </div>
 
-      {/* Finale */}
-      <div>
-        <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Finale</h3>
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-          <div className="bg-ffse-navy px-3 py-1.5 border-b border-neutral-100">
-            <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
-          </div>
-          <div className="divide-y divide-neutral-100">
-            {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map((t, i) => (
-              <div key={i} className="flex items-center gap-2 py-2 px-3">
-                <div className="w-6 h-6 bg-neutral-100 rounded-full shrink-0" />
-                <span className="text-xs text-neutral-400 italic">{t}</span>
+          {activeCol === 2 && (
+            <div className="bg-white rounded-2xl border-2 border-ffse-navy shadow-md overflow-hidden">
+              <div className="bg-ffse-navy px-3 py-2">
+                <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="divide-y divide-neutral-100">
+                <PlaceholderRow label="Vainqueur 1/2 A" />
+                <PlaceholderRow label="Vainqueur 1/2 B" />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Indicateurs */}
+      <div className="flex justify-center gap-2 mt-4">
+        {columns.map((_, i) => (
+          <button key={i} onClick={() => setActiveCol(i)}
+            className={`w-2 h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy" : "bg-neutral-300"}`}
+          />
+        ))}
       </div>
     </div>
+  );
+
+  return (
+    <>
+      <DesktopBracket />
+      <MobileBracket />
+    </>
   );
 }
 
