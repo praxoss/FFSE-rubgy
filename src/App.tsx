@@ -219,16 +219,15 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
         </div>
 
         <div className="overflow-hidden relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCol}
-              initial={{ x: activeCol > prevCol.current ? "60%" : "-60%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: activeCol > prevCol.current ? "-60%" : "60%", opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="space-y-3"
-            >
-              {activeCol === 0 && quarters.map(qf => (
+          <motion.div
+            animate={{ x: `${-activeCol * 100}%` }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="flex"
+            style={{ width: "300%" }}
+          >
+            {/* Quarts */}
+            <div className="space-y-3" style={{ width: "33.333%" }}>
+              {quarters.map(qf => (
                 <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
                   <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
                     <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
@@ -247,7 +246,11 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
                   </div>
                 </div>
               ))}
-              {activeCol === 1 && [
+            </div>
+
+            {/* Demi-finales */}
+            <div className="space-y-3 px-2" style={{ width: "33.333%" }}>
+              {[
                 { label: "1/2 A", t1: "Vainqueur QF1", t2: "Vainqueur QF4" },
                 { label: "1/2 B", t1: "Vainqueur QF2", t2: "Vainqueur QF3" },
               ].map(sf => (
@@ -265,23 +268,25 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
                   </div>
                 </div>
               ))}
-              {activeCol === 2 && (
-                <div className="bg-white rounded-2xl border-2 border-ffse-navy shadow-md overflow-hidden">
-                  <div className="bg-ffse-navy px-3 py-2">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map(t => (
-                      <div key={t} className="flex items-center gap-2 py-2.5 px-3">
-                        <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
-                        <span className="text-xs text-neutral-400 italic">{t}</span>
-                      </div>
-                    ))}
-                  </div>
+            </div>
+
+            {/* Finale */}
+            <div style={{ width: "33.333%" }}>
+              <div className="bg-white rounded-2xl border-2 border-ffse-navy shadow-md overflow-hidden">
+                <div className="bg-ffse-navy px-3 py-2">
+                  <span className="text-[9px] uppercase tracking-widest font-bold text-white">Finale</span>
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                <div className="divide-y divide-neutral-100">
+                  {["Vainqueur 1/2 A", "Vainqueur 1/2 B"].map(t => (
+                    <div key={t} className="flex items-center gap-2 py-2.5 px-3">
+                      <div className="w-7 h-7 bg-neutral-100 rounded-full shrink-0" />
+                      <span className="text-xs text-neutral-400 italic">{t}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         <div className="flex justify-center gap-2 mt-4">
