@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
 import StatsPage from "./StatsPage";
@@ -83,23 +83,7 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
   if (top8.length < 8) return null;
 
   const [activeCol, setActiveCol] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientX);
-  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    if (Math.abs(distance) >= minSwipeDistance) {
-      if (distance > 0) setActiveCol(c => Math.min(c + 1, 2));
-      else setActiveCol(c => Math.max(c - 1, 0));
-    }
-    setTouchStart(null);
-    setTouchEnd(null);
-  };
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const quarters = [
     { label: "QF1", home: top8[0], away: top8[7] },
@@ -234,11 +218,15 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
         </div>
       </div>
 
-      {/* ── Mobile carousel ── */}
+      {/* ── Mobile scroll snap ── */}
       <div className="md:hidden">
         <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
           {["Quarts", "Demi-finales", "Finale"].map((col, i) => (
-            <button key={col} onClick={() => setActiveCol(i)}
+            <button key={col} onClick={() => {
+              if (!scrollRef.current) return;
+              scrollRef.current.scrollTo({ left: i * scrollRef.current.offsetWidth, behavior: "smooth" });
+              setActiveCol(i);
+            }}
               className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
                 activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"
               }`}
@@ -249,48 +237,54 @@ function PlayoffBracket({ rankings }: { rankings: Ranking[] }) {
         </div>
 
         <div
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
+          ref={scrollRef}
+          onScroll={() => {
+            if (!scrollRef.current) return;
+            const col = Math.round(scrollRef.current.scrollLeft / scrollRef.current.offsetWidth);
+            setActiveCol(col);
+          }}
+          className="flex overflow-x-auto pb-2"
+          style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCol}
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.18 }}
-              className="space-y-3"
-            >
-              {activeCol === 0 && quarters.map(qf => (
-                <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-                  <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
-                  </div>
-                  <div className="divide-y divide-neutral-100">
-                    <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
-                    <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
-                  </div>
+          {/* Quarts */}
+          <div className="shrink-0 w-full space-y-3 pr-1" style={{ scrollSnapAlign: "start" }}>
+            {quarters.map(qf => (
+              <div key={qf.label} className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+                <div className="bg-neutral-50 px-3 py-1.5 border-b border-neutral-100">
+                  <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-400">{qf.label}</span>
                 </div>
-              ))}
-              {activeCol === 1 && (
-                <div className="space-y-3">
-                  <SFCard label="1/2 A" q1="Vainqueur QF1" q2="Vainqueur QF4" />
-                  <SFCard label="1/2 B" q1="Vainqueur QF2" q2="Vainqueur QF3" />
+                <div className="divide-y divide-neutral-100">
+                  <TeamRow team={qf.home} seed={rankings.indexOf(qf.home) + 1} />
+                  <TeamRow team={qf.away} seed={rankings.indexOf(qf.away) + 1} />
                 </div>
-              )}
-              {activeCol === 2 && <FinalCard />}
-            </motion.div>
-          </AnimatePresence>
+              </div>
+            ))}
+          </div>
+
+          {/* Demi-finales */}
+          <div className="shrink-0 w-full space-y-3 pr-1" style={{ scrollSnapAlign: "start" }}>
+            <SFCard label="1/2 A" q1="Vainqueur QF1" q2="Vainqueur QF4" />
+            <SFCard label="1/2 B" q1="Vainqueur QF2" q2="Vainqueur QF3" />
+          </div>
+
+          {/* Finale */}
+          <div className="shrink-0 w-full" style={{ scrollSnapAlign: "start" }}>
+            <FinalCard />
+          </div>
         </div>
 
         <div className="flex justify-center gap-2 mt-4">
           {[0, 1, 2].map(i => (
-            <button key={i} onClick={() => setActiveCol(i)}
-              className={`w-2 h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy w-4" : "bg-neutral-300"}`}
+            <button key={i} onClick={() => {
+              if (!scrollRef.current) return;
+              scrollRef.current.scrollTo({ left: i * scrollRef.current.offsetWidth, behavior: "smooth" });
+              setActiveCol(i);
+            }}
+              className={`h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy w-4" : "bg-neutral-300 w-2"}`}
             />
           ))}
         </div>
+      </div>
       </div>
     </>
   );
