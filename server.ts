@@ -269,7 +269,7 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
   console.log(`[api] ${events.length} events found for ${division.toUpperCase()}`);
 
   return events
-    .filter(e => Array.isArray(e.teams) && e.teams.length >= 2)
+    .filter(e => Array.isArray(e.teams) && e.teams.length >= 2 && e.format !== "tournament")
     .map(e => {
       const dateStr: string = e.date || "";
       const date = dateStr.split("T")[0] || "";
@@ -320,6 +320,30 @@ async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
       };
     })
     .sort((a, b) => a.matchday !== b.matchday ? a.matchday - b.matchday : a.date.localeCompare(b.date));
+}
+
+// Helper : parse stats détaillées depuis un event FFSE
+function parseEventStats(event: any) {
+  const homeId = String(event.teams?.[0]);
+  const awayId = String(event.teams?.[1]);
+  const results = event.results || {};
+
+  const parseStats = (teamId: string) => {
+    const r = results[teamId];
+    if (!r) return null;
+    return {
+      tries:       r.tries       !== "" ? Number(r.tries)       : null,
+      conversions: r.conversions !== "" ? Number(r.conversions) : null,
+      penalties:   r.p           !== "" ? Number(r.p)           : null,
+      drops:       r.d           !== "" ? Number(r.d)           : null,
+      yellow:      r.cj          !== "" ? Number(r.cj)          : null,
+      red:         r.cr          !== "" ? Number(r.cr)          : null,
+      bonus_def:   r.bd          !== "" ? Number(r.bd)          : null,
+      bonus_off:   r.bp          !== "" ? Number(r.bp)          : null,
+    };
+  };
+
+  return { home: parseStats(homeId), away: parseStats(awayId) };
 }
 
 // ── API Routes ────────────────────────────────────────────
@@ -626,7 +650,6 @@ async function refreshDivision(division: Division) {
 
   console.log(`[refresh] ${division.toUpperCase()} done — ${allMatches.length} matches, ${allRankings.length} teams`);
   return { allMatches, allRankings };
-  return { allMatches, allRankings };
 }
 
 app.post("/admin/refresh", authenticateAdmin, async (req, res) => {
@@ -765,10 +788,8 @@ app.post("/admin/manual-score", authenticateAdmin, async (req, res) => {
 
 app.post("/admin/clear-manual", authenticateAdmin, async (req, res) => {
   try {
-    // Récupérer les matchs manuels avant de les effacer
     const manualMatches = db.prepare(`SELECT * FROM matches WHERE manual = 1`).all() as any[];
 
-    // Annuler les points dans le classement
     for (const m of manualMatches) {
       if (m.score_home !== null && m.score_away !== null) {
         if (m.score_home !== m.score_away) {
@@ -813,6 +834,7 @@ app.post("/admin/clear-manual", authenticateAdmin, async (req, res) => {
   }
 });
 
+// ── Match détail (saison régulière) ──────────────────────
 app.get("/api/match/:eventId", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -841,36 +863,226 @@ app.get("/api/match/:eventId", async (req, res) => {
       if (venueRes.ok) venue = await venueRes.json();
     }
 
-    const homeId = String(event.teams?.[0]);
-    const awayId = String(event.teams?.[1]);
-    const results = event.results || {};
-
-    const parseStats = (teamId: string) => {
-      const r = results[teamId];
-      if (!r) return null;
-      return {
-        tries:       r.tries       ?? null,
-        conversions: r.conversions ?? null,
-        penalties:   r.p           ?? null,
-        drops:       r.d           ?? null,
-        yellow:      r.cj          ?? null,
-        red:         r.cr          ?? null,
-        bonus_def:   r.bd          ?? null,
-        bonus_off:   r.bp          ?? null,
-      };
-    };
-
     res.json({
       match,
       venue: venue ? { id: venue.id, name: venue.name, slug: venue.slug } : null,
-      stats: {
-        home: parseStats(homeId),
-        away: parseStats(awayId),
-      },
+      stats: parseEventStats(event),
       ffse_url: event.link,
     });
   } catch (error: any) {
     console.error("[match] Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── Playoffs ──────────────────────────────────────────────
+app.get("/api/playoffs/:division", async (req, res) => {
+  try {
+    const division = req.params.division as Division;
+    if (!DIVISIONS[division]) return res.status(400).json({ error: "Division invalide" });
+
+    const { leagueId } = DIVISIONS[division];
+
+    // Fetch tous les events de la division (inclut format=tournament)
+    const events = await fetchAllPages<any>(
+      `${FFSE_BASE}/sportspress/v2/events?leagues=${leagueId}&seasons=${SEASON_ID}`
+    );
+
+    // Filtrer les matchs de phases finales
+    const finalesClass = `sp_league-finales-${division}`;
+    const playoffEvents = events.filter((e: any) =>
+      e.format === "tournament" &&
+      Array.isArray(e.class_list) &&
+      e.class_list.includes(finalesClass) &&
+      Array.isArray(e.teams) &&
+      e.teams.length >= 2 &&
+      e.main_results !== undefined
+    );
+
+    if (playoffEvents.length === 0) {
+      return res.json([]);
+    }
+
+    // Résoudre les noms d'équipes : standings d'abord (noms canoniques), puis teams API
+    const [standings, teamMap] = await Promise.all([
+      fetchStandingsFromAPI(division),
+      fetchTeamsFromAPI(division),
+    ]);
+    const rankingNameMap = new Map<number, string>();
+    for (const r of standings) rankingNameMap.set((r as any).id, r.team);
+
+    const result = await Promise.all(playoffEvents.map(async (e: any) => {
+      const homeId: number = e.teams[0];
+      const awayId: number = e.teams[1];
+
+      const homeName = rankingNameMap.get(homeId) ?? teamMap.get(homeId)?.name ?? `Team#${homeId}`;
+      const awayName = rankingNameMap.get(awayId) ?? teamMap.get(awayId)?.name ?? `Team#${awayId}`;
+
+      const homeClub = db.prepare("SELECT logo FROM clubs WHERE name = ?").get(homeName) as any;
+      const awayClub = db.prepare("SELECT logo FROM clubs WHERE name = ?").get(awayName) as any;
+
+      // Score depuis main_results (ordre = ordre de e.teams)
+      let score_home: number | null = null;
+      let score_away: number | null = null;
+      if (Array.isArray(e.main_results) && e.main_results.length === 2) {
+        const sh = e.main_results[0];
+        const sa = e.main_results[1];
+        if (sh !== "" && sh != null) score_home = Number(sh);
+        if (sa !== "" && sa != null) score_away = Number(sa);
+      }
+
+      const winnerId: number | null = e.winner ?? null;
+      const winnerName = winnerId
+        ? (rankingNameMap.get(winnerId) ?? teamMap.get(winnerId)?.name ?? null)
+        : null;
+
+      const dateStr: string = e.date || "";
+      const date = dateStr.split("T")[0] || "";
+      const timePart = dateStr.split("T")[1] || "";
+      const timeMatch = timePart.match(/^(\d{2}:\d{2})/);
+      const time = timeMatch ? timeMatch[1] : null;
+
+      const venueClass = (e.class_list || []).find((c: string) => c.startsWith("sp_venue-"));
+      const location = venueClass
+        ? venueClass.replace("sp_venue-", "").split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+        : null;
+
+      // Stats détaillées si le match est joué
+      let stats: { home: any; away: any } | null = null;
+      if (score_home !== null && score_away !== null) {
+        // Les stats sont déjà dans l'event fetché en masse — on les parse directement
+        stats = parseEventStats(e);
+
+        // Si les stats sont vides (tries = null), fetch individuel pour avoir le détail complet
+        if (stats.home?.tries === null && stats.away?.tries === null) {
+          try {
+            const detailRes = await fetch(`${FFSE_BASE}/sportspress/v2/events/${e.id}`, {
+              headers: { Accept: "application/json" },
+            });
+            if (detailRes.ok) {
+              const detailEvent = await detailRes.json();
+              stats = parseEventStats(detailEvent);
+            }
+          } catch (err) {
+            console.warn(`[playoffs] Failed to fetch detail for event ${e.id}:`, err);
+          }
+        }
+      }
+
+      return {
+        id:         e.id,
+        date,
+        time,
+        location,
+        home_team:  homeName,
+        away_team:  awayName,
+        home_logo:  homeClub?.logo ?? null,
+        away_logo:  awayClub?.logo ?? null,
+        score_home,
+        score_away,
+        winner:     winnerName,
+        stats,
+        ffse_url:   e.link ?? null,
+      };
+    }));
+
+    // Trier par date
+    result.sort((a, b) => a.date.localeCompare(b.date));
+
+    res.json(result);
+  } catch (error: any) {
+    console.error("[playoffs] Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── Match détail playoffs (par event ID FFSE) ─────────────
+app.get("/api/playoffs/:division/match/:eventId", async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const division = req.params.division as Division;
+    if (!DIVISIONS[division]) return res.status(400).json({ error: "Division invalide" });
+
+    const eventRes = await fetch(`${FFSE_BASE}/sportspress/v2/events/${eventId}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!eventRes.ok) return res.status(500).json({ error: "Failed to fetch event" });
+    const event = await eventRes.json();
+
+    // Vérifier que c'est bien un match playoff de cette division
+    const finalesClass = `sp_league-finales-${division}`;
+    if (!event.class_list?.includes(finalesClass)) {
+      return res.status(400).json({ error: "Ce match n'est pas un match de phases finales de cette division" });
+    }
+
+    // Résoudre les noms
+    const [standings, teamMap] = await Promise.all([
+      fetchStandingsFromAPI(division),
+      fetchTeamsFromAPI(division),
+    ]);
+    const rankingNameMap = new Map<number, string>();
+    for (const r of standings) rankingNameMap.set((r as any).id, r.team);
+
+    const homeId: number = event.teams?.[0];
+    const awayId: number = event.teams?.[1];
+    const homeName = rankingNameMap.get(homeId) ?? teamMap.get(homeId)?.name ?? `Team#${homeId}`;
+    const awayName = rankingNameMap.get(awayId) ?? teamMap.get(awayId)?.name ?? `Team#${awayId}`;
+
+    const homeClub = db.prepare("SELECT logo FROM clubs WHERE name = ?").get(homeName) as any;
+    const awayClub = db.prepare("SELECT logo FROM clubs WHERE name = ?").get(awayName) as any;
+
+    let score_home: number | null = null;
+    let score_away: number | null = null;
+    if (Array.isArray(event.main_results) && event.main_results.length === 2) {
+      const sh = event.main_results[0];
+      const sa = event.main_results[1];
+      if (sh !== "" && sh != null) score_home = Number(sh);
+      if (sa !== "" && sa != null) score_away = Number(sa);
+    }
+
+    const winnerId: number | null = event.winner ?? null;
+    const winnerName = winnerId
+      ? (rankingNameMap.get(winnerId) ?? teamMap.get(winnerId)?.name ?? null)
+      : null;
+
+    let venue = null;
+    if (event.venues?.length > 0) {
+      try {
+        const venueRes = await fetch(`${FFSE_BASE}/sportspress/v2/venues/${event.venues[0]}`, {
+          headers: { Accept: "application/json" },
+        });
+        if (venueRes.ok) {
+          const v = await venueRes.json();
+          venue = { id: v.id, name: v.name, slug: v.slug };
+        }
+      } catch (e) {
+        console.warn("[playoffs/match] venue fetch failed");
+      }
+    }
+
+    const dateStr: string = event.date || "";
+    const date = dateStr.split("T")[0] || "";
+    const timePart = dateStr.split("T")[1] || "";
+    const timeMatch = timePart.match(/^(\d{2}:\d{2})/);
+    const time = timeMatch ? timeMatch[1] : null;
+
+    res.json({
+      id:        Number(eventId),
+      date,
+      time,
+      home_team: homeName,
+      away_team: awayName,
+      home_logo: homeClub?.logo ?? null,
+      away_logo: awayClub?.logo ?? null,
+      score_home,
+      score_away,
+      winner:    winnerName,
+      venue,
+      stats:     parseEventStats(event),
+      ffse_url:  event.link ?? null,
+    });
+  } catch (error: any) {
+    console.error("[playoffs/match] Error:", error);
     res.status(500).json({ error: error.message });
   }
 });
