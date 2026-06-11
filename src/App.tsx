@@ -401,20 +401,22 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
         />
       ))}
     </div>
-
-    {/* Connecteur QF → 1/2 */}
+    
+{/* Connecteur QF → 1/2 */}
 <div className="relative">
-  <div className="absolute" style={{ top: 48, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 48, left: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 156, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 102, left: 20, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Groupe haut : QF1 + QF4 → 1/2 A */}
+  <div className="absolute" style={{ top: 48, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 48, right: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 156, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 102, left: 0, right: 20, height: 2, backgroundColor: "#d1d5db" }} />
 
-  <div className="absolute" style={{ top: 264, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 264, left: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 372, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 318, left: 20, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Groupe bas : QF2 + QF3 → 1/2 B */}
+  <div className="absolute" style={{ top: 264, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 264, right: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 372, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  <div className="absolute" style={{ top: 318, left: 0, right: 20, height: 2, backgroundColor: "#d1d5db" }} />
 </div>
-
+    
 {/* Col 1/2 */}
 <div className="flex flex-col self-stretch">
   <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Demi-finales</p>
