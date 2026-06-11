@@ -440,7 +440,12 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
 <div className="flex flex-col" style={{ paddingTop: 164 }}>
   <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
   <FinalCard />
-</div>
+        </div>
+       </div>
+      </div>
+    </>
+  );
+}
 
 // ── Modal Saisie Manuelle ─────────────────────────────────
 function ManualScoreModal({ allMatches, user, onClose, onSuccess }: {
