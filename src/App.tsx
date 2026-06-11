@@ -439,7 +439,7 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
               </div>
         
             {/* Col Finale */}
-            <div className="flex flex-col" style={{ paddingTop: 255 }}>
+            <div className="flex flex-col" style={{ paddingTop: 198 }}>
               <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
               <FinalCard />
             </div>
