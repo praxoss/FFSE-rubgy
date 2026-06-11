@@ -404,17 +404,23 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
     
 {/* Connecteur QF → 1/2 */}
 <div className="relative">
-  {/* Groupe haut : QF1 + QF4 → 1/2 A */}
-  <div className="absolute" style={{ top: 48, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 48, right: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 156, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 102, left: 0, right: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Trait court QF1 */}
+  <div className="absolute" style={{ top: 102, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Trait court QF4 */}
+  <div className="absolute" style={{ top: 210, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Barre verticale QF1-QF4 */}
+  <div className="absolute" style={{ top: 102, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
+  {/* Trait horizontal vers 1/2 A */}
+  <div className="absolute" style={{ top: 156, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
 
-  {/* Groupe bas : QF2 + QF3 → 1/2 B */}
-  <div className="absolute" style={{ top: 264, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 264, right: 0, width: 2, height: 108, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 372, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 318, left: 0, right: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Trait court QF2 */}
+  <div className="absolute" style={{ top: 318, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Trait court QF3 */}
+  <div className="absolute" style={{ top: 426, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+  {/* Barre verticale QF2-QF3 */}
+  <div className="absolute" style={{ top: 318, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
+  {/* Trait horizontal vers 1/2 B */}
+  <div className="absolute" style={{ top: 372, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
 </div>
     
 {/* Col 1/2 */}
