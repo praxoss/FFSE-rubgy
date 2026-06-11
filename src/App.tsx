@@ -437,14 +437,6 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
   </div>
 </div>
 
-{/* Connecteur 1/2 → Finale */}
-<div className="relative">
-  <div className="absolute" style={{ top: 102, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 102, left: 0, width: 2, height: 216, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 318, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  <div className="absolute" style={{ top: 210, left: 20, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
-</div>
-
 {/* Col Finale */}
 <div className="flex flex-col" style={{ paddingTop: 164 }}>
   <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
