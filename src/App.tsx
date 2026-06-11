@@ -388,62 +388,62 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
   return (
     <>
       {/* ── Desktop ── */}
-<div className="hidden md:block">
-  <div className="grid grid-cols-[1fr_40px_1fr_40px_1fr] gap-0 items-stretch">
-    {/* Col QF */}
-    <div className="flex flex-col gap-3">
-      <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Quarts de finale</p>
-      {quarters.map(qf => (
-        <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
-          pm={findMatch(qf.home, qf.away)}
-          rankHome={rankings.indexOf(qf.home) + 1}
-          rankAway={rankings.indexOf(qf.away) + 1}
-        />
-      ))}
-    </div>
-    
-{/* Connecteur QF → 1/2 */}
-<div className="relative">
-  {/* Trait court QF1 */}
-  <div className="absolute" style={{ top: 102, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  {/* Trait court QF4 */}
-  <div className="absolute" style={{ top: 210, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  {/* Barre verticale QF1-QF4 */}
-  <div className="absolute" style={{ top: 102, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
-  {/* Trait horizontal vers 1/2 A */}
-  <div className="absolute" style={{ top: 156, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
-
-  {/* Trait court QF2 */}
-  <div className="absolute" style={{ top: 318, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  {/* Trait court QF3 */}
-  <div className="absolute" style={{ top: 426, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-  {/* Barre verticale QF2-QF3 */}
-  <div className="absolute" style={{ top: 318, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
-  {/* Trait horizontal vers 1/2 B */}
-  <div className="absolute" style={{ top: 372, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
-</div>
-    
-    {/* Connecteur 1/2 → Finale */}
-      <div className="relative">
-        {/* Trait court demi A — part du bord droit */}
-        <div className="absolute" style={{ top: 170, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-        {/* Trait court demi B — part du bord droit */}
-        <div className="absolute" style={{ top: 540, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-        {/* Barre verticale — à droite, relie les deux traits */}
-        <div className="absolute" style={{ top: 170, left: 20, width: 2, height: 372, backgroundColor: "#d1d5db" }} />
-        {/* Trait horizontal vers Finale — du milieu de la barre vers la droite */}
-        <div className="absolute" style={{ top: 356, right: 22, left: 0, height: 2, backgroundColor: "#d1d5db" }} />
-      </div>
-  </div>
-</div>
-
-{/* Col Finale */}
-<div className="flex flex-col" style={{ paddingTop: 164 }}>
-  <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
-  <FinalCard />
+        <div className="hidden md:block">
+          <div className="grid grid-cols-[1fr_40px_1fr_40px_1fr] gap-0 items-stretch">
+        
+            {/* Col QF */}
+            <div className="flex flex-col gap-3">
+              <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Quarts de finale</p>
+              {quarters.map(qf => (
+                <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
+                  pm={findMatch(qf.home, qf.away)}
+                  rankHome={rankings.indexOf(qf.home) + 1}
+                  rankAway={rankings.indexOf(qf.away) + 1}
+                />
+              ))}
+            </div>
+        
+            {/* Connecteur QF → 1/2 */}
+            <div className="relative">
+              <div className="absolute" style={{ top: 102, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 210, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 102, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 156, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 318, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 426, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 318, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 372, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+            </div>
+        
+            {/* Col 1/2 */}
+            <div className="flex flex-col self-stretch">
+              <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Demi-finales</p>
+              <div className="relative" style={{ minHeight: 600 }}>
+                <div className="absolute" style={{ top: 108, width: "100%" }}>
+                  <MatchCard label={semis[0].label} home={semis[0].home} away={semis[0].away} pm={semis[0].match} />
+                </div>
+                <div className="absolute" style={{ top: 324, width: "100%" }}>
+                  <MatchCard label={semis[1].label} home={semis[1].home} away={semis[1].away} pm={semis[1].match} />
+                </div>
+              </div>
+            </div>
+        
+            {/* Connecteur 1/2 → Finale */}
+            <div className="relative">
+              <div className="absolute" style={{ top: 204, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 420, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 204, left: 20, width: 2, height: 218, backgroundColor: "#d1d5db" }} />
+              <div className="absolute" style={{ top: 312, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+            </div>
+        
+            {/* Col Finale */}
+            <div className="flex flex-col" style={{ paddingTop: 264 }}>
+              <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
+              <FinalCard />
+            </div>
+        
+          </div>
         </div>
-       </div>
-      </div>
     </>
   );
 }
