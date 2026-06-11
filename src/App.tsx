@@ -430,7 +430,7 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
         {/* Trait court demi B — part du bord droit */}
         <div className="absolute" style={{ top: 540, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
         {/* Barre verticale — à droite, relie les deux traits */}
-        <div className="absolute" style={{ top: 170, right: 20, width: 2, height: 372, backgroundColor: "#d1d5db" }} />
+        <div className="absolute" style={{ top: 170, left: 20, width: 2, height: 372, backgroundColor: "#d1d5db" }} />
         {/* Trait horizontal vers Finale — du milieu de la barre vers la droite */}
         <div className="absolute" style={{ top: 356, right: 22, left: 0, height: 2, backgroundColor: "#d1d5db" }} />
       </div>
