@@ -446,6 +446,46 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
         
           </div>
         </div>
+
+      {/* ── Mobile ── */}
+        <div className="md:hidden">
+          <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
+            {["Quarts", "Demi-finales", "Finale"].map((col, i) => (
+              <button key={col} onClick={() => setActiveCol(i)}
+                className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}>
+                {col}
+              </button>
+            ))}
+          </div>
+          <div className="overflow-hidden relative">
+            <motion.div animate={{ x: `${-activeCol * 100}%` }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex" style={{ width: "300%" }}>
+              <div className="space-y-3" style={{ width: "33.333%" }}>
+                {quarters.map(qf => (
+                  <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
+                    pm={findMatch(qf.home, qf.away)}
+                    rankHome={rankings.indexOf(qf.home) + 1}
+                    rankAway={rankings.indexOf(qf.away) + 1}
+                  />
+                ))}
+              </div>
+              <div className="space-y-3 px-2" style={{ width: "33.333%" }}>
+                {semis.map(sf => (
+                  <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
+                ))}
+              </div>
+              <div style={{ width: "33.333%" }}>
+                <FinalCard />
+              </div>
+            </motion.div>
+          </div>
+          <div className="flex justify-center gap-2 mt-4">
+            {[0, 1, 2].map(i => (
+              <button key={i} onClick={() => setActiveCol(i)}
+                className={`h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy w-4" : "bg-neutral-300 w-2"}`} />
+            ))}
+          </div>
+        </div>
+      
     </>
   );
 }
