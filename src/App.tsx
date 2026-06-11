@@ -457,9 +457,13 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
               </button>
             ))}
           </div>
-          <div className="overflow-hidden relative">
-            <motion.div animate={{ x: `${-activeCol * 100}%` }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex" style={{ width: "300%" }}>
-              <div className="space-y-3" style={{ width: "33.333%" }}>
+          <div className="overflow-hidden">
+            <motion.div
+              animate={{ x: `${-activeCol * 100}%` }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="flex w-full"
+            >
+              <div className="min-w-full space-y-3">
                 {quarters.map(qf => (
                   <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
                     pm={findMatch(qf.home, qf.away)}
@@ -468,12 +472,12 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
                   />
                 ))}
               </div>
-              <div className="space-y-3 px-2" style={{ width: "33.333%" }}>
+              <div className="min-w-full space-y-3">
                 {semis.map(sf => (
                   <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
                 ))}
               </div>
-              <div style={{ width: "33.333%" }}>
+              <div className="min-w-full">
                 <FinalCard />
               </div>
             </motion.div>
