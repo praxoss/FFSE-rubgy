@@ -404,16 +404,18 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
             </div>
         
             {/* Connecteur QF → 1/2 */}
-            <div className="relative">
-              <div className="absolute" style={{ top: 102, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 210, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 102, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 156, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 318, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 426, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 318, left: 20, width: 2, height: 110, backgroundColor: "#d1d5db" }} />
-              <div className="absolute" style={{ top: 372, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
-            </div>
+            {/* Connecteur QF → 1/2 */}
+              <div className="relative">
+                <div className="absolute" style={{ top: 100, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 232, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 100, left: 20, width: 2, height: 132, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 166, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+              
+                <div className="absolute" style={{ top: 362, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 496, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 362, left: 20, width: 2, height: 134, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 429, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+              </div>
         
             {/* Col 1/2 */}
             <div className="flex flex-col self-stretch">
