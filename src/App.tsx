@@ -421,10 +421,10 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
             <div className="flex flex-col self-stretch">
               <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Demi-finales</p>
               <div className="relative" style={{ minHeight: 600 }}>
-                <div className="absolute" style={{ top: 108, width: "100%" }}>
+                <div className="absolute" style={{ top: 68, width: "100%" }}>
                   <MatchCard label={semis[0].label} home={semis[0].home} away={semis[0].away} pm={semis[0].match} />
                 </div>
-                <div className="absolute" style={{ top: 324, width: "100%" }}>
+                <div className="absolute" style={{ top: 333, width: "100%" }}>
                   <MatchCard label={semis[1].label} home={semis[1].home} away={semis[1].away} pm={semis[1].match} />
                 </div>
               </div>
