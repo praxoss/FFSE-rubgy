@@ -388,96 +388,61 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
   return (
     <>
       {/* ── Desktop ── */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-[1fr_40px_1fr_40px_1fr] gap-0 items-start">
-          <div>
-            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Quarts de finale</p>
-            <div className="space-y-3">
-              {quarters.map(qf => (
-                <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
-                  pm={findMatch(qf.home, qf.away)}
-                  rankHome={rankings.indexOf(qf.home) + 1}
-                  rankAway={rankings.indexOf(qf.away) + 1}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="relative self-stretch">
-            <svg width="40" className="absolute inset-0 h-full" preserveAspectRatio="none" viewBox="0 0 40 600">
-              <line x1="0" y1="13%" x2="20" y2="13%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="13%" x2="20" y2="26%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="26%" x2="20" y2="26%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="20%" x2="40" y2="20%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="58%" x2="20" y2="58%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="58%" x2="20" y2="71%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="71%" x2="20" y2="71%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="65%" x2="40" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
-            </svg>
-          </div>
-          <div className="flex flex-col py-0">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
-            <div className="flex flex-col space-y-0 gap-[48px] mt-[170px]">
-              {semis.map(sf => (
-                <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
-              ))}
-            </div>
-          </div>
-          <div className="relative self-stretch">
-            <svg width="40" className="absolute inset-0 h-full" preserveAspectRatio="none" viewBox="0 0 40 600">
-              <line x1="0" y1="35%" x2="20" y2="35%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="35%" x2="20" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="65%" x2="20" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="50%" x2="40" y2="50%" stroke="#d1d5db" strokeWidth="1.5" />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center h-full">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Finale</p>
-            <FinalCard />
-          </div>
-        </div>
-      </div>
+<div className="hidden md:block">
+  <div className="grid grid-cols-[1fr_40px_1fr_40px_1fr] gap-0">
+    {/* Col QF */}
+    <div className="flex flex-col gap-3">
+      <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Quarts de finale</p>
+      {quarters.map(qf => (
+        <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
+          pm={findMatch(qf.home, qf.away)}
+          rankHome={rankings.indexOf(qf.home) + 1}
+          rankAway={rankings.indexOf(qf.away) + 1}
+        />
+      ))}
+    </div>
 
-      {/* ── Mobile ── */}
-      <div className="md:hidden">
-        <div className="flex gap-1 mb-4 bg-neutral-100 p-1 rounded-xl">
-          {["Quarts", "Demi-finales", "Finale"].map((col, i) => (
-            <button key={col} onClick={() => setActiveCol(i)}
-              className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeCol === i ? "bg-white text-ffse-navy shadow-sm" : "text-neutral-400"}`}>
-              {col}
-            </button>
-          ))}
-        </div>
-        <div className="overflow-hidden relative">
-          <motion.div animate={{ x: `${-activeCol * 100}%` }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex" style={{ width: "300%" }}>
-            <div className="space-y-3" style={{ width: "33.333%" }}>
-              {quarters.map(qf => (
-                <MatchCard key={qf.label} label={qf.label} home={qf.home} away={qf.away}
-                  pm={findMatch(qf.home, qf.away)}
-                  rankHome={rankings.indexOf(qf.home) + 1}
-                  rankAway={rankings.indexOf(qf.away) + 1}
-                />
-              ))}
-            </div>
-            <div className="space-y-3 px-2" style={{ width: "33.333%" }}>
-              {semis.map(sf => (
-                <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
-              ))}
-            </div>
-            <div style={{ width: "33.333%" }}>
-              <FinalCard />
-            </div>
-          </motion.div>
-        </div>
-        <div className="flex justify-center gap-2 mt-4">
-          {[0, 1, 2].map(i => (
-            <button key={i} onClick={() => setActiveCol(i)}
-              className={`h-2 rounded-full transition-all ${activeCol === i ? "bg-ffse-navy w-4" : "bg-neutral-300 w-2"}`} />
-          ))}
-        </div>
+    {/* Connecteur QF → 1/2 : rendu via CSS, pas SVG */}
+    <div className="relative">
+      {/* Trait QF1+QF4 → 1/2 A */}
+      <div className="absolute" style={{ top: "calc(25% - 1px)", left: 0, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+      {/* Barre verticale gauche groupe haut */}
+      <div className="absolute" style={{ top: "12.5%", bottom: "50%", left: 0, width: 2, backgroundColor: "#d1d5db" }} />
+      {/* Trait vers 1/2 A */}
+      <div className="absolute" style={{ top: "calc(25% - 1px)", left: "50%", right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+
+      {/* Trait QF2+QF3 → 1/2 B */}
+      <div className="absolute" style={{ top: "calc(75% - 1px)", left: 0, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+      {/* Barre verticale gauche groupe bas */}
+      <div className="absolute" style={{ top: "50%", bottom: "12.5%", left: 0, width: 2, backgroundColor: "#d1d5db" }} />
+      {/* Trait vers 1/2 B */}
+      <div className="absolute" style={{ top: "calc(75% - 1px)", left: "50%", right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+    </div>
+
+    {/* Col 1/2 */}
+    <div className="flex flex-col">
+      <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Demi-finales</p>
+      <div className="flex flex-col justify-around flex-1 gap-3 h-full">
+        {semis.map(sf => (
+          <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
+        ))}
       </div>
-    </>
-  );
-}
+    </div>
+
+    {/* Connecteur 1/2 → Finale */}
+    <div className="relative">
+      <div className="absolute" style={{ top: "calc(50% - 1px)", left: 0, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+      <div className="absolute" style={{ top: "25%", bottom: "25%", left: 0, width: 2, backgroundColor: "#d1d5db" }} />
+      <div className="absolute" style={{ top: "calc(50% - 1px)", left: "50%", right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+    </div>
+
+    {/* Col Finale */}
+    <div className="flex flex-col justify-center">
+      <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Finale</p>
+      <FinalCard />
+    </div>
+  </div>
+</div>
 
 // ── Modal Saisie Manuelle ─────────────────────────────────
 function ManualScoreModal({ allMatches, user, onClose, onSuccess }: {
