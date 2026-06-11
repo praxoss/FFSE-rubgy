@@ -407,14 +407,14 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
             {/* Connecteur QF → 1/2 */}
               <div className="relative">
                 <div className="absolute" style={{ top: 100, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-                <div className="absolute" style={{ top: 232, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 231, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
                 <div className="absolute" style={{ top: 100, left: 20, width: 2, height: 132, backgroundColor: "#d1d5db" }} />
-                <div className="absolute" style={{ top: 166, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 155, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
               
                 <div className="absolute" style={{ top: 362, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-                <div className="absolute" style={{ top: 496, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 495, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
                 <div className="absolute" style={{ top: 362, left: 20, width: 2, height: 134, backgroundColor: "#d1d5db" }} />
-                <div className="absolute" style={{ top: 429, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+                <div className="absolute" style={{ top: 420, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
               </div>
         
             {/* Col 1/2 */}
