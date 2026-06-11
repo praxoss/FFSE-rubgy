@@ -423,15 +423,16 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
   <div className="absolute" style={{ top: 372, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
 </div>
     
-{/* Col 1/2 */}
-<div className="flex flex-col self-stretch">
-  <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-1">Demi-finales</p>
-  <div className="relative" style={{ height: 420 }}>
-    <div className="absolute" style={{ top: 56, width: "100%" }}>
-      <MatchCard label={semis[0].label} home={semis[0].home} away={semis[0].away} pm={semis[0].match} />
-    </div>
-    <div className="absolute" style={{ top: 270, width: "100%" }}>
-      <MatchCard label={semis[1].label} home={semis[1].home} away={semis[1].away} pm={semis[1].match} />
+{/* Connecteur 1/2 → Finale */}
+    <div className="relative">
+      {/* Trait court 1/2 A */}
+      <div className="absolute" style={{ top: 204, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+      {/* Trait court 1/2 B */}
+      <div className="absolute" style={{ top: 420, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+      {/* Barre verticale 1/2 A - 1/2 B */}
+      <div className="absolute" style={{ top: 204, left: 20, width: 2, height: 218, backgroundColor: "#d1d5db" }} />
+      {/* Trait horizontal vers Finale */}
+      <div className="absolute" style={{ top: 312, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
     </div>
   </div>
 </div>
