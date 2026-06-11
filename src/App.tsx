@@ -404,19 +404,19 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
           </div>
           <div className="relative self-stretch">
             <svg width="40" className="absolute inset-0 h-full" preserveAspectRatio="none" viewBox="0 0 40 600">
-              <line x1="0" y1="12%" x2="20" y2="12%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="12%" x2="20" y2="28%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="28%" x2="20" y2="28%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="13%" x2="20" y2="13%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="13%" x2="20" y2="26%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="26%" x2="20" y2="26%" stroke="#d1d5db" strokeWidth="1.5" />
               <line x1="20" y1="20%" x2="40" y2="20%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="62%" x2="20" y2="62%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="62%" x2="20" y2="78%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="0" y1="78%" x2="20" y2="78%" stroke="#d1d5db" strokeWidth="1.5" />
-              <line x1="20" y1="70%" x2="40" y2="70%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="58%" x2="20" y2="58%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="58%" x2="20" y2="71%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="0" y1="71%" x2="20" y2="71%" stroke="#d1d5db" strokeWidth="1.5" />
+              <line x1="20" y1="65%" x2="40" y2="65%" stroke="#d1d5db" strokeWidth="1.5" />
             </svg>
           </div>
-          <div className="flex flex-col justify-between py-16">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
-            <div className="space-y-4">
+          <div className="flex flex-col py-0">
+             <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
+            <div className="flex flex-col justify-around h-full space-y-0 gap-[72px] mt-[52px]">
               {semis.map(sf => (
                 <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
               ))}
