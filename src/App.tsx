@@ -415,8 +415,8 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
             </svg>
           </div>
           <div className="flex flex-col py-0">
-             <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
-            <div className="flex flex-col justify-around h-full space-y-0 gap-[72px] mt-[52px]">
+            <p className="text-[9px] uppercase tracking-widest font-bold text-neutral-400 mb-3">Demi-finales</p>
+            <div className="flex flex-col space-y-0 gap-[48px] mt-[170px]">
               {semis.map(sf => (
                 <MatchCard key={sf.label} label={sf.label} home={sf.home} away={sf.away} pm={sf.match} />
               ))}
