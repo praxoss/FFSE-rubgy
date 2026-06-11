@@ -424,16 +424,16 @@ function PlayoffBracket({ rankings, division }: { rankings: Ranking[]; division:
 </div>
     
     {/* Connecteur 1/2 → Finale */}
-    <div className="relative">
-      {/* Trait court 1/2 A */}
-      <div className="absolute" style={{ top: 204, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-      {/* Trait court 1/2 B */}
-      <div className="absolute" style={{ top: 420, right: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
-      {/* Barre verticale 1/2 A - 1/2 B */}
-      <div className="absolute" style={{ top: 204, right: 20, width: 2, height: 218, backgroundColor: "#d1d5db" }} />
-      {/* Trait horizontal vers Finale */}
-      <div className="absolute" style={{ top: 312, left: 0, right: 22, height: 2, backgroundColor: "#d1d5db" }} />
-    </div>
+      <div className="relative">
+        {/* Trait court 1/2 A */}
+        <div className="absolute" style={{ top: 204, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+        {/* Trait court 1/2 B */}
+        <div className="absolute" style={{ top: 420, left: 0, width: 20, height: 2, backgroundColor: "#d1d5db" }} />
+        {/* Barre verticale */}
+        <div className="absolute" style={{ top: 204, left: 20, width: 2, height: 218, backgroundColor: "#d1d5db" }} />
+        {/* Trait horizontal vers Finale */}
+        <div className="absolute" style={{ top: 312, left: 22, right: 0, height: 2, backgroundColor: "#d1d5db" }} />
+      </div>
   </div>
 </div>
 
