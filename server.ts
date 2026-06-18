@@ -892,8 +892,7 @@ app.get("/api/playoffs/:division", async (req, res) => {
     const playoffEvents = events.filter((e: any) =>
       e.format === "tournament" &&
       Array.isArray(e.teams) &&
-      e.teams.length >= 2 &&
-      e.main_results !== undefined
+      e.teams.length >= 2
     );
 
     if (playoffEvents.length === 0) {
