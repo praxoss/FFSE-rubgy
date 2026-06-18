@@ -986,7 +986,18 @@ app.get("/api/playoffs/:division", async (req, res) => {
     // Trier par date
     result.sort((a, b) => a.date.localeCompare(b.date));
 
-    res.json(result);
+      const deduped = result.reduce((acc: any[], match: any) => {
+        const existing = acc.find(m => m.home_team === match.home_team && m.away_team === match.away_team);
+        if (!existing) {
+          acc.push(match);
+        } else if (match.score_home !== null && existing.score_home === null) {
+          const idx = acc.indexOf(existing);
+          acc[idx] = match;
+        }
+        return acc;
+      }, []);
+      
+      res.json(deduped);
   } catch (error: any) {
     console.error("[playoffs] Error:", error);
     res.status(500).json({ error: error.message });
