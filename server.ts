@@ -166,10 +166,10 @@ const FFSE_BASE = "https://www.rugby-ffse.fr/wp-json";
 const SEASON_ID = 217;
 
 const DIVISIONS = {
-  d1: { leagueId: 161, tableId: 11798 },
-  d2: { leagueId: 162, tableId: 11659 },
-  d3: { leagueId: 163, tableId: 11807 },
-  d4: { leagueId: 164, tableId: 11809 },
+  d1: { leagueId: 161, tableId: 11798, finalesLeagueId: null  },
+  d2: { leagueId: 162, tableId: 11659, finalesLeagueId: null  },
+  d3: { leagueId: 163, tableId: 11807, finalesLeagueId: 205 },
+  d4: { leagueId: 164, tableId: 11809, finalesLeagueId: null  },
 } as const;
 
 type Division = keyof typeof DIVISIONS;
@@ -889,11 +889,8 @@ app.get("/api/playoffs/:division", async (req, res) => {
     );
 
     // Filtrer les matchs de phases finales
-    const finalesClass = `sp_league-finales-${division}`;
     const playoffEvents = events.filter((e: any) =>
       e.format === "tournament" &&
-      Array.isArray(e.class_list) &&
-      e.class_list.includes(finalesClass) &&
       Array.isArray(e.teams) &&
       e.teams.length >= 2 &&
       e.main_results !== undefined
