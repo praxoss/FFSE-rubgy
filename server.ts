@@ -881,11 +881,12 @@ app.get("/api/playoffs/:division", async (req, res) => {
     const division = req.params.division as Division;
     if (!DIVISIONS[division]) return res.status(400).json({ error: "Division invalide" });
 
-    const { leagueId } = DIVISIONS[division];
-
+    const { leagueId, finalesLeagueId } = DIVISIONS[division];
+    const playoffsLeague = finalesLeagueId ?? leagueId;
+    
     // Fetch tous les events de la division (inclut format=tournament)
     const events = await fetchAllPages<any>(
-      `${FFSE_BASE}/sportspress/v2/events?leagues=${leagueId}&seasons=${SEASON_ID}`
+      `${FFSE_BASE}/sportspress/v2/events?leagues=${playoffsLeague}&seasons=${SEASON_ID}`
     );
 
     // Filtrer les matchs de phases finales
