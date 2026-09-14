@@ -20,3 +20,8 @@ jobs:
             npm install
             npm run build
             pm2 restart implacables
+            sleep 5
+            echo "=== PM2 LOGS (diagnostic temporaire) ==="
+            pm2 logs implacables --lines 150 --nostream
+            echo "=== PM2 STATUS ==="
+            pm2 status
