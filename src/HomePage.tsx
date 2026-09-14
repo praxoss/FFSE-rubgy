@@ -13,7 +13,7 @@ export default function HomePage() {
           Rugby FFSE
         </h1>
         <p className="text-neutral-400 font-medium text-xs uppercase tracking-widest">
-          Saison 2025 - 2026
+          Saison 2026 - 2027
         </p>
       </div>
 
@@ -31,6 +31,10 @@ export default function HomePage() {
           </motion.button>
         ))}
       </div>
+
+      <button onClick={() => navigate("/archives")} className="text-neutral-400 hover:text-ffse-navy transition-colors text-[10px] uppercase tracking-widest font-bold">
+        Saisons précédentes →
+      </button>
     </div>
   );
 }

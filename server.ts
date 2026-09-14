@@ -117,6 +117,76 @@ try {
     );
   `);
 
+  // ── Archives de saison ─────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS archive_matches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      season TEXT NOT NULL,
+      ffse_event_id INTEGER,
+      matchday INTEGER,
+      division TEXT NOT NULL,
+      date TEXT,
+      time TEXT,
+      location TEXT,
+      home_team TEXT,
+      away_team TEXT,
+      score_home INTEGER,
+      score_away INTEGER,
+      bonus_off_home INTEGER DEFAULT 0,
+      bonus_def_home INTEGER DEFAULT 0,
+      bonus_off_away INTEGER DEFAULT 0,
+      bonus_def_away INTEGER DEFAULT 0,
+      tries_home INTEGER DEFAULT 0,
+      tries_away INTEGER DEFAULT 0,
+      yellow_home INTEGER DEFAULT 0,
+      yellow_away INTEGER DEFAULT 0,
+      red_home INTEGER DEFAULT 0,
+      red_away INTEGER DEFAULT 0
+    );
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS archive_rankings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      season TEXT NOT NULL,
+      team TEXT,
+      division TEXT NOT NULL,
+      played INTEGER,
+      won INTEGER,
+      drawn INTEGER,
+      lost INTEGER,
+      bonus INTEGER DEFAULT 0,
+      diff INTEGER DEFAULT 0,
+      points INTEGER
+    );
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS archive_playoffs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      season TEXT NOT NULL,
+      division TEXT NOT NULL,
+      ffse_event_id INTEGER,
+      date TEXT,
+      time TEXT,
+      location TEXT,
+      home_team TEXT,
+      away_team TEXT,
+      home_logo TEXT,
+      away_logo TEXT,
+      score_home INTEGER,
+      score_away INTEGER,
+      winner TEXT
+    );
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS archived_seasons (
+      season TEXT PRIMARY KEY,
+      archived_at TEXT
+    );
+  `);
+
   // Migration — colonnes bonus
   try {
     db.exec(`ALTER TABLE matches ADD COLUMN bonus_off_home INTEGER DEFAULT 0`);
@@ -162,17 +232,38 @@ app.use((req, res, next) => {
 });
 
 // ── API REST SportsPress ──────────────────────────────────
-const FFSE_BASE = "https://www.rugby-ffse.fr/wp-json";
-const SEASON_ID = 217;
+const FFSE_BASE = "https://challenge.rugby-ffse.fr/wp-json";
+// Saison actuellement affichée en direct sur le site.
+const CURRENT_SEASON_LABEL = "2026-2027";
+const SEASON_ID = 221;
 
 const DIVISIONS = {
-  d1: { leagueId: 161, tableId: 11798, finalesLeagueId: null  },
-  d2: { leagueId: 162, tableId: 11659, finalesLeagueId: null  },
-  d3: { leagueId: 163, tableId: 11807, finalesLeagueId: 205 },
-  d4: { leagueId: 164, tableId: 11809, finalesLeagueId: null  },
+  d1: { leagueId: 161, tableId: 13105, finalesLeagueId: null  },
+  d2: { leagueId: 162, tableId: 12696, finalesLeagueId: null  },
+  d3: { leagueId: 163, tableId: 13285, finalesLeagueId: 205 },
+  d4: { leagueId: 164, tableId: 12823, finalesLeagueId: null  },
 } as const;
 
 type Division = keyof typeof DIVISIONS;
+
+// Configuration des saisons passées — conservée uniquement pour permettre
+// de récupérer un instantané des phases finales au moment de l'archivage
+// automatique (voir archiveSeasonIfNeeded). Ajouter une entrée ici à chaque
+// bascule de saison, avant de remplacer SEASON_ID/DIVISIONS ci-dessus.
+const SEASON_ARCHIVES: Record<string, {
+  seasonId: number;
+  divisions: Record<Division, { leagueId: number; tableId: number; finalesLeagueId: number | null }>;
+}> = {
+  "2025-2026": {
+    seasonId: 217,
+    divisions: {
+      d1: { leagueId: 161, tableId: 11798, finalesLeagueId: null },
+      d2: { leagueId: 162, tableId: 11659, finalesLeagueId: null },
+      d3: { leagueId: 163, tableId: 11807, finalesLeagueId: 205 },
+      d4: { leagueId: 164, tableId: 11809, finalesLeagueId: null },
+    },
+  },
+};
 
 const normalizeText = (str: string) =>
   str.replace(/&rsquo;/g, "'").replace(/&amp;/g, "&").replace(/&#8211;/g, "–").replace(/&#038;/g, "&").replace(/&[a-z0-9#]+;/gi, "");
@@ -196,9 +287,8 @@ async function fetchAllPages<T>(url: string): Promise<T[]> {
   return results;
 }
 
-async function fetchStandingsFromAPI(division: Division): Promise<any[]> {
-  const { tableId } = DIVISIONS[division];
-  console.log(`[api] Fetching ${division.toUpperCase()} standings (table ${tableId})...`);
+async function fetchStandingsFromAPI(tableId: number): Promise<any[]> {
+  console.log(`[api] Fetching standings (table ${tableId})...`);
   const res = await fetch(`${FFSE_BASE}/sportspress/v2/tables/${tableId}`, {
     headers: { Accept: "application/json" },
   });
@@ -221,13 +311,12 @@ async function fetchStandingsFromAPI(division: Division): Promise<any[]> {
     .sort((a, b) => a.points !== b.points ? b.points - a.points : b.diff - a.diff);
 }
 
-async function fetchTeamsFromAPI(division: Division): Promise<Map<number, { name: string; logo: string | null }>> {
-  const { leagueId } = DIVISIONS[division];
-  console.log(`[api] Fetching ${division.toUpperCase()} teams...`);
+async function fetchTeamsFromAPI(leagueId: number, seasonId: number): Promise<Map<number, { name: string; logo: string | null }>> {
+  console.log(`[api] Fetching teams (league ${leagueId}, season ${seasonId})...`);
   const teams = await fetchAllPages<any>(
-    `${FFSE_BASE}/sportspress/v2/teams?leagues=${leagueId}&seasons=${SEASON_ID}`
+    `${FFSE_BASE}/sportspress/v2/teams?leagues=${leagueId}&seasons=${seasonId}`
   );
-  console.log(`[api] ${teams.length} teams found for ${division.toUpperCase()}`);
+  console.log(`[api] ${teams.length} teams found (league ${leagueId})`);
 
   const mediaIds = teams.filter(t => t.featured_media > 0).map(t => t.featured_media as number);
   const logoMap = new Map<number, string>();
@@ -260,13 +349,12 @@ async function fetchTeamsFromAPI(division: Division): Promise<Map<number, { name
   return teamMap;
 }
 
-async function fetchMatchesFromAPI(division: Division): Promise<any[]> {
-  const { leagueId } = DIVISIONS[division];
-  console.log(`[api] Fetching ${division.toUpperCase()} events...`);
+async function fetchMatchesFromAPI(leagueId: number, seasonId: number): Promise<any[]> {
+  console.log(`[api] Fetching events (league ${leagueId}, season ${seasonId})...`);
   const events = await fetchAllPages<any>(
-    `${FFSE_BASE}/sportspress/v2/events?leagues=${leagueId}&seasons=${SEASON_ID}`
+    `${FFSE_BASE}/sportspress/v2/events?leagues=${leagueId}&seasons=${seasonId}`
   );
-  console.log(`[api] ${events.length} events found for ${division.toUpperCase()}`);
+  console.log(`[api] ${events.length} events found (league ${leagueId})`);
 
   return events
     .filter(e => Array.isArray(e.teams) && e.teams.length >= 2 && e.format !== "tournament")
@@ -402,10 +490,11 @@ app.get("/api/data", (req, res) => {
 });
 
 async function refreshDivision(division: Division) {
+  const { leagueId, tableId } = DIVISIONS[division];
   const [rawMatches, teamMap, allRankings] = await Promise.all([
-    fetchMatchesFromAPI(division),
-    fetchTeamsFromAPI(division),
-    fetchStandingsFromAPI(division),
+    fetchMatchesFromAPI(leagueId, SEASON_ID),
+    fetchTeamsFromAPI(leagueId, SEASON_ID),
+    fetchStandingsFromAPI(tableId),
   ]);
 
   const rankingNameMap = new Map<number, string>();
@@ -876,17 +965,15 @@ app.get("/api/match/:eventId", async (req, res) => {
 });
 
 // ── Playoffs ──────────────────────────────────────────────
-app.get("/api/playoffs/:division", async (req, res) => {
-  try {
-    const division = req.params.division as Division;
-    if (!DIVISIONS[division]) return res.status(400).json({ error: "Division invalide" });
-
-    const { leagueId, finalesLeagueId } = DIVISIONS[division];
+// Logique partagée entre la route live (/api/playoffs/:division) et
+// l'archivage de saison, qui doit pouvoir rejouer la même requête avec
+// les identifiants d'une saison passée (voir SEASON_ARCHIVES).
+async function buildPlayoffMatches(seasonId: number, leagueId: number, finalesLeagueId: number | null, tableId: number) {
     const playoffsLeague = finalesLeagueId ?? leagueId;
-    
+
     // Fetch tous les events de la division (inclut format=tournament)
     const events = await fetchAllPages<any>(
-      `${FFSE_BASE}/sportspress/v2/events?leagues=${playoffsLeague}&seasons=${SEASON_ID}`
+      `${FFSE_BASE}/sportspress/v2/events?leagues=${playoffsLeague}&seasons=${seasonId}`
     );
 
     // Filtrer les matchs de phases finales
@@ -897,13 +984,13 @@ app.get("/api/playoffs/:division", async (req, res) => {
     );
 
     if (playoffEvents.length === 0) {
-      return res.json([]);
+      return [];
     }
 
     // Résoudre les noms d'équipes : standings d'abord (noms canoniques), puis teams API
     const [standings, teamMap] = await Promise.all([
-      fetchStandingsFromAPI(division),
-      fetchTeamsFromAPI(division),
+      fetchStandingsFromAPI(tableId),
+      fetchTeamsFromAPI(leagueId, seasonId),
     ]);
     const rankingNameMap = new Map<number, string>();
     for (const r of standings) rankingNameMap.set((r as any).id, r.team);
@@ -986,18 +1073,27 @@ app.get("/api/playoffs/:division", async (req, res) => {
     // Trier par date
     result.sort((a, b) => a.date.localeCompare(b.date));
 
-      const deduped = result.reduce((acc: any[], match: any) => {
-        const existing = acc.find(m => m.home_team === match.home_team && m.away_team === match.away_team);
-        if (!existing) {
-          acc.push(match);
-        } else if (match.score_home !== null && existing.score_home === null) {
-          const idx = acc.indexOf(existing);
-          acc[idx] = match;
-        }
-        return acc;
-      }, []);
-      
-      res.json(deduped);
+    const deduped = result.reduce((acc: any[], match: any) => {
+      const existing = acc.find(m => m.home_team === match.home_team && m.away_team === match.away_team);
+      if (!existing) {
+        acc.push(match);
+      } else if (match.score_home !== null && existing.score_home === null) {
+        const idx = acc.indexOf(existing);
+        acc[idx] = match;
+      }
+      return acc;
+    }, []);
+
+    return deduped;
+}
+
+app.get("/api/playoffs/:division", async (req, res) => {
+  try {
+    const division = req.params.division as Division;
+    if (!DIVISIONS[division]) return res.status(400).json({ error: "Division invalide" });
+    const { leagueId, tableId, finalesLeagueId } = DIVISIONS[division];
+    const deduped = await buildPlayoffMatches(SEASON_ID, leagueId, finalesLeagueId, tableId);
+    res.json(deduped);
   } catch (error: any) {
     console.error("[playoffs] Error:", error);
     res.status(500).json({ error: error.message });
@@ -1024,9 +1120,10 @@ app.get("/api/playoffs/:division/match/:eventId", async (req, res) => {
     }
 
     // Résoudre les noms
+    const { leagueId: divLeagueId, tableId: divTableId } = DIVISIONS[division];
     const [standings, teamMap] = await Promise.all([
-      fetchStandingsFromAPI(division),
-      fetchTeamsFromAPI(division),
+      fetchStandingsFromAPI(divTableId),
+      fetchTeamsFromAPI(divLeagueId, SEASON_ID),
     ]);
     const rankingNameMap = new Map<number, string>();
     for (const r of standings) rankingNameMap.set((r as any).id, r.team);
@@ -1095,6 +1192,59 @@ app.get("/api/playoffs/:division/match/:eventId", async (req, res) => {
   }
 });
 
+// ── Archives de saison ────────────────────────────────────
+app.get("/api/archive", (req, res) => {
+  try {
+    const seasons = db.prepare(
+      "SELECT season, archived_at FROM archived_seasons ORDER BY season DESC"
+    ).all();
+    res.json(seasons);
+  } catch (error: any) {
+    console.error("[archive] Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/archive/:season", (req, res) => {
+  try {
+    const { season } = req.params;
+    const exists = db.prepare("SELECT 1 FROM archived_seasons WHERE season = ?").get(season);
+    if (!exists) return res.status(404).json({ error: "Saison non archivée" });
+
+    const getRankings = (division: string) => db.prepare(`
+      SELECT r.team, r.division, r.played, r.won, r.drawn, r.lost, r.bonus, r.diff, r.points, c.logo
+      FROM archive_rankings r
+      LEFT JOIN clubs c ON r.team = c.name
+      WHERE r.season = ? AND r.division = ?
+      ORDER BY r.points DESC, r.diff DESC
+    `).all(season, division);
+
+    const getMatches = (division: string) => db.prepare(`
+      SELECT m.*, c_home.logo AS home_logo, c_away.logo AS away_logo
+      FROM archive_matches m
+      LEFT JOIN clubs c_home ON m.home_team = c_home.name
+      LEFT JOIN clubs c_away ON m.away_team = c_away.name
+      WHERE m.season = ? AND m.division = ?
+      ORDER BY m.matchday ASC, m.date ASC
+    `).all(season, division);
+
+    const getPlayoffs = (division: string) => db.prepare(`
+      SELECT * FROM archive_playoffs WHERE season = ? AND division = ? ORDER BY date ASC
+    `).all(season, division);
+
+    res.json({
+      season,
+      d1: { rankings: getRankings("d1"), matches: getMatches("d1"), playoffs: getPlayoffs("d1") },
+      d2: { rankings: getRankings("d2"), matches: getMatches("d2"), playoffs: getPlayoffs("d2") },
+      d3: { rankings: getRankings("d3"), matches: getMatches("d3"), playoffs: getPlayoffs("d3") },
+      d4: { rankings: getRankings("d4"), matches: getMatches("d4"), playoffs: getPlayoffs("d4") },
+    });
+  } catch (error: any) {
+    console.error("[archive] Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.all("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.url}` });
 });
@@ -1114,6 +1264,88 @@ cron.schedule("0 12 * * 1", async () => {
     console.error("[cron] Erreur lors de la MAJ:", err);
   }
 }, { timezone: "Europe/Paris" });
+
+// Bascule automatiquement et une seule fois vers une nouvelle saison :
+// archive la saison précédente (matchs + classements + instantané des
+// phases finales) puis vide les tables live pour repartir sur
+// CURRENT_SEASON_LABEL. Idempotent — ne fait rien si déjà à jour.
+async function archiveSeasonIfNeeded() {
+  const row = db.prepare("SELECT value FROM metadata WHERE key = 'current_season'").get() as { value: string } | undefined;
+  // Avant l'introduction de ce mécanisme, le site affichait la 2025-2026 —
+  // c'est donc la valeur par défaut à considérer en l'absence de métadonnée.
+  const storedSeason = row?.value ?? "2025-2026";
+
+  if (storedSeason !== CURRENT_SEASON_LABEL) {
+    const already = db.prepare("SELECT 1 FROM archived_seasons WHERE season = ?").get(storedSeason);
+    if (!already) {
+      console.log(`[archive] Bascule de saison détectée : ${storedSeason} → ${CURRENT_SEASON_LABEL}. Archivage en cours...`);
+      try {
+        db.transaction(() => {
+          db.prepare(`
+            INSERT INTO archive_matches (season, ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, tries_home, tries_away, yellow_home, yellow_away, red_home, red_away)
+            SELECT ?, ffse_event_id, matchday, division, date, time, location, home_team, away_team, score_home, score_away, bonus_off_home, bonus_def_home, bonus_off_away, bonus_def_away, tries_home, tries_away, yellow_home, yellow_away, red_home, red_away
+            FROM matches
+          `).run(storedSeason);
+
+          db.prepare(`
+            INSERT INTO archive_rankings (season, team, division, played, won, drawn, lost, bonus, diff, points)
+            SELECT ?, team, division, played, won, drawn, lost, bonus, diff, points
+            FROM rankings
+          `).run(storedSeason);
+
+          db.prepare("INSERT OR REPLACE INTO archived_seasons (season, archived_at) VALUES (?, ?)")
+            .run(storedSeason, new Date().toISOString());
+
+          db.exec("DELETE FROM matches");
+          db.exec("DELETE FROM rankings");
+          db.exec("DELETE FROM rankings_history");
+        })();
+        console.log(`[archive] Saison ${storedSeason} archivée (classement + résultats) et base repartie à zéro.`);
+      } catch (e) {
+        console.error("[archive] Échec de l'archivage — abandon, nouvelle tentative au prochain démarrage:", e);
+        return; // ne pas mettre à jour metadata.current_season : on réessaiera
+      }
+
+      // Instantané des phases finales — best-effort, ne bloque jamais le démarrage.
+      const archiveConfig = SEASON_ARCHIVES[storedSeason];
+      if (archiveConfig) {
+        for (const div of Object.keys(archiveConfig.divisions) as Division[]) {
+          const { leagueId, tableId, finalesLeagueId } = archiveConfig.divisions[div];
+          if (!finalesLeagueId) continue;
+          try {
+            const playoffMatches = await buildPlayoffMatches(archiveConfig.seasonId, leagueId, finalesLeagueId, tableId);
+            const insertPlayoff = db.prepare(`
+              INSERT INTO archive_playoffs (season, division, ffse_event_id, date, time, location, home_team, away_team, home_logo, away_logo, score_home, score_away, winner)
+              VALUES (@season, @division, @ffse_event_id, @date, @time, @location, @home_team, @away_team, @home_logo, @away_logo, @score_home, @score_away, @winner)
+            `);
+            for (const m of playoffMatches as any[]) {
+              insertPlayoff.run({
+                season: storedSeason,
+                division: div,
+                ffse_event_id: m.id,
+                date: m.date,
+                time: m.time,
+                location: m.location,
+                home_team: m.home_team,
+                away_team: m.away_team,
+                home_logo: m.home_logo,
+                away_logo: m.away_logo,
+                score_home: m.score_home,
+                score_away: m.score_away,
+                winner: m.winner,
+              });
+            }
+            console.log(`[archive] Phases finales ${div.toUpperCase()} ${storedSeason} archivées (${playoffMatches.length} match(s)).`);
+          } catch (e) {
+            console.warn(`[archive] Échec de la récupération des phases finales ${div.toUpperCase()} pour ${storedSeason}:`, e);
+          }
+        }
+      }
+    }
+  }
+
+  db.prepare("INSERT OR REPLACE INTO metadata (key, value) VALUES ('current_season', ?)").run(CURRENT_SEASON_LABEL);
+}
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -1135,6 +1367,8 @@ async function startServer() {
 }
 
 startServer().then(async () => {
+  console.log("[startup] Vérification de la saison...");
+  await archiveSeasonIfNeeded();
   console.log("[startup] MAJ automatique au démarrage...");
   try {
     await Promise.all([

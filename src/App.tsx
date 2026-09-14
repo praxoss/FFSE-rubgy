@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import HomePage from "./HomePage";
 import StatsPage from "./StatsPage";
+import { ArchiveIndex, ArchiveSeasonHome, ArchiveDivisionPage } from "./ArchivePage";
 import { Trophy, Calendar, RefreshCw, ChevronRight, ChevronLeft, Info, MapPin, LogIn, LogOut, PenLine, X, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, isFirebaseConfigured } from "./firebase";
@@ -691,7 +692,7 @@ function DivisionPage() {
     finally { setUpdating(false); }
   };
   const handleDebugFetch = async () => {
-    const url = window.prompt("URL à tester", "https://www.rugby-ffse.fr/saison-2025-2026/d3/");
+    const url = window.prompt("URL à tester", "https://challenge.rugby-ffse.fr/saison-2026-2027/d3/");
     if (!url || !user) return;
     setUpdating(true);
     try {
@@ -762,7 +763,7 @@ function DivisionPage() {
             </button>
             <div>
               <h1 className="font-display text-xl md:text-3xl tracking-tighter uppercase leading-none">Rugby <span className="text-ffse-red">{division.toUpperCase()}</span> FFSE</h1>
-              <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest">Saison 2025 - 2026</p>
+              <p className="text-blue-300/60 font-medium text-[10px] uppercase tracking-widest">Saison 2026 - 2027</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -838,7 +839,7 @@ function DivisionPage() {
               </div>
               <div>
                 <h1 className="font-display text-lg md:text-2xl tracking-tighter uppercase leading-none">{selectedClub}</h1>
-                <p className="text-blue-300/60 text-[9px] uppercase tracking-widest font-bold">{division.toUpperCase()} · Saison 2025-2026</p>
+                <p className="text-blue-300/60 text-[9px] uppercase tracking-widest font-bold">{division.toUpperCase()} · Saison 2026-2027</p>
               </div>
             </div>
             <div className="shrink-0">{user && <button onClick={handleLogout} className="text-blue-300 hover:text-white transition-colors"><LogOut size={18} /></button>}</div>
@@ -1314,6 +1315,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/archives" element={<ArchiveIndex />} />
+      <Route path="/archives/:season" element={<ArchiveSeasonHome />} />
+      <Route path="/archives/:season/:div" element={<ArchiveDivisionPage />} />
       <Route path="/:div/match/:eventId" element={<MatchPage />} />
       <Route path="/:div/playoffs/match/:eventId" element={<PlayoffMatchPage />} />
       <Route path="/:div" element={<DivisionPage />} />
