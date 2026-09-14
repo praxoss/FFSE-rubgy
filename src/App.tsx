@@ -692,7 +692,7 @@ function DivisionPage() {
     finally { setUpdating(false); }
   };
   const handleDebugFetch = async () => {
-    const url = window.prompt("URL à tester", "https://challenge.rugby-ffse.fr/saison-2026-2027/d3/");
+    const url = window.prompt("URL à tester", "https://www.rugby-ffse.fr/saison-2026-2027/d3/");
     if (!url || !user) return;
     setUpdating(true);
     try {

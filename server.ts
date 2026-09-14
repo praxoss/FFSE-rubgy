@@ -232,7 +232,7 @@ app.use((req, res, next) => {
 });
 
 // ── API REST SportsPress ──────────────────────────────────
-const FFSE_BASE = "https://challenge.rugby-ffse.fr/wp-json";
+const FFSE_BASE = "https://www.rugby-ffse.fr/wp-json";
 // Saison actuellement affichée en direct sur le site.
 const CURRENT_SEASON_LABEL = "2026-2027";
 const SEASON_ID = 221;
