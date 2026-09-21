@@ -240,7 +240,7 @@ const SEASON_ID = 221;
 const DIVISIONS = {
   d1: { leagueId: 161, tableId: 13105, finalesLeagueId: null  },
   d2: { leagueId: 162, tableId: 12696, finalesLeagueId: null  },
-  d3: { leagueId: 163, tableId: 13285, finalesLeagueId: 205 },
+  d3: { leagueId: 163, tableId: 13652, finalesLeagueId: 205 },
   d4: { leagueId: 164, tableId: 12823, finalesLeagueId: null  },
 } as const;
 
