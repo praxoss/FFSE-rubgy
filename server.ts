@@ -268,20 +268,48 @@ const SEASON_ARCHIVES: Record<string, {
 const normalizeText = (str: string) =>
   str.replace(/&rsquo;/g, "'").replace(/&amp;/g, "&").replace(/&#8211;/g, "–").replace(/&#038;/g, "&").replace(/&[a-z0-9#]+;/gi, "");
 
+const FFSE_HEADERS = {
+  Accept: "application/json",
+  "Accept-Language": "fr-FR,fr;q=0.9",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+};
+
+// Un fetch FFSE peut renvoyer 200 avec une page HTML (anti-bot / rate-limit)
+// au lieu du JSON attendu — res.json() leve alors une exception qui, si elle
+// n'est pas rattrapee, fait planter TOUTE la division (le Promise.all dans
+// refreshDivision) au lieu de juste manquer une page. fetchJson() rattrape
+// ca, retente une fois avec un leger delai, et ne renvoie jamais qu'un objet
+// deja parse ou null — jamais une exception.
+async function fetchJson(url: string, retries = 1): Promise<any | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, { headers: FFSE_HEADERS });
+      if (!res.ok) {
+        console.error(`[api] HTTP ${res.status} — ${url}`);
+      } else {
+        try {
+          return await res.json();
+        } catch (parseErr: any) {
+          console.error(`[api] Reponse non-JSON (probable anti-bot/rate-limit) — ${url}: ${parseErr.message}`);
+        }
+      }
+    } catch (fetchErr: any) {
+      console.error(`[api] Fetch echoue — ${url}: ${fetchErr.message}`);
+    }
+    if (attempt < retries) await new Promise(r => setTimeout(r, 700));
+  }
+  return null;
+}
+
 async function fetchAllPages<T>(url: string): Promise<T[]> {
   const results: T[] = [];
   let page = 1;
   while (true) {
     const sep = url.includes("?") ? "&" : "?";
-    const res = await fetch(`${url}${sep}per_page=100&page=${page}`, {
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) { console.error(`[api] HTTP ${res.status} — ${url} page ${page}`); break; }
-    const data: T[] = await res.json();
+    const data = await fetchJson(`${url}${sep}per_page=100&page=${page}`);
     if (!Array.isArray(data) || data.length === 0) break;
-    results.push(...data);
-    const totalPages = parseInt(res.headers.get("X-WP-TotalPages") || "1", 10);
-    if (page >= totalPages) break;
+    results.push(...(data as T[]));
+    if (data.length < 100) break; // derniere page (pas d'en-tete X-WP-TotalPages via fetchJson)
     page++;
   }
   return results;
@@ -289,11 +317,8 @@ async function fetchAllPages<T>(url: string): Promise<T[]> {
 
 async function fetchStandingsFromAPI(tableId: number): Promise<any[]> {
   console.log(`[api] Fetching standings (table ${tableId})...`);
-  const res = await fetch(`${FFSE_BASE}/sportspress/v2/tables/${tableId}`, {
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) { console.error(`[api] standings HTTP ${res.status}`); return []; }
-  const table = await res.json();
+  const table = await fetchJson(`${FFSE_BASE}/sportspress/v2/tables/${tableId}`);
+  if (!table) { console.error(`[api] standings indisponibles (table ${tableId})`); return []; }
   const data: Record<string, any> = table.data || {};
   return Object.entries(data)
     .filter(([teamId, row]) => teamId !== "0" && row.name)
@@ -322,20 +347,12 @@ async function fetchTeamsFromAPI(leagueId: number, seasonId: number): Promise<Ma
   const logoMap = new Map<number, string>();
 
   if (mediaIds.length > 0) {
-    try {
-      const res = await fetch(
-        `${FFSE_BASE}/wp/v2/media?include=${mediaIds.join(",")}&per_page=100`,
-        { headers: { Accept: "application/json" } }
-      );
-      if (res.ok) {
-        const items: any[] = await res.json();
-        for (const item of items) {
-          const url = item.media_details?.sizes?.thumbnail?.source_url || item.source_url;
-          if (url) logoMap.set(item.id, url);
-        }
+    const items = await fetchJson(`${FFSE_BASE}/wp/v2/media?include=${mediaIds.join(",")}&per_page=100`);
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        const url = item.media_details?.sizes?.thumbnail?.source_url || item.source_url;
+        if (url) logoMap.set(item.id, url);
       }
-    } catch (e: any) {
-      console.warn("[api] Media fetch failed:", e.message);
     }
   }
 
@@ -741,14 +758,22 @@ async function refreshDivision(division: Division) {
   return { allMatches, allRankings };
 }
 
+// Enchaine les divisions au lieu de tirer 4x3 requetes FFSE en meme temps :
+// observe en prod que les requetes tirees en rafale se font parfois repondre
+// une page anti-bot (HTML) plutot que le JSON attendu, ce qui vidait le
+// classement de D3/D4 alors que les donnees existent bien cote FFSE.
+async function refreshAllDivisions() {
+  const results: Record<Division, { allMatches: any[]; allRankings: any[] }> = {} as any;
+  for (const division of Object.keys(DIVISIONS) as Division[]) {
+    results[division] = await refreshDivision(division);
+    await new Promise(r => setTimeout(r, 600));
+  }
+  return results;
+}
+
 app.post("/admin/refresh", authenticateAdmin, async (req, res) => {
   try {
-    const [d1Result, d2Result, d3Result, d4Result] = await Promise.all([
-      refreshDivision("d1"),
-      refreshDivision("d2"),
-      refreshDivision("d3"),
-      refreshDivision("d4"),
-    ]);
+    const { d1: d1Result, d2: d2Result, d3: d3Result, d4: d4Result } = await refreshAllDivisions();
 
     if ([d1Result, d2Result, d3Result, d4Result].every(r => r.allMatches.length === 0 && r.allRankings.length === 0)) {
       return res.status(500).json({ error: "API returned no data" });
@@ -1253,12 +1278,7 @@ app.all("/api/*", (req, res) => {
 cron.schedule("0 12 * * 1", async () => {
   console.log("[cron] MAJ automatique du lundi...");
   try {
-    await Promise.all([
-      refreshDivision("d1"),
-      refreshDivision("d2"),
-      refreshDivision("d3"),
-      refreshDivision("d4"),
-    ]);
+    await refreshAllDivisions();
     console.log("[cron] MAJ terminée avec succès");
   } catch (err) {
     console.error("[cron] Erreur lors de la MAJ:", err);
@@ -1371,12 +1391,7 @@ startServer().then(async () => {
   await archiveSeasonIfNeeded();
   console.log("[startup] MAJ automatique au démarrage...");
   try {
-    await Promise.all([
-      refreshDivision("d1"),
-      refreshDivision("d2"),
-      refreshDivision("d3"),
-      refreshDivision("d4"),
-    ]);
+    await refreshAllDivisions();
     console.log("[startup] MAJ automatique terminée");
   } catch (err) {
     console.error("[startup] MAJ automatique échouée:", err);
